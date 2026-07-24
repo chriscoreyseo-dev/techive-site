@@ -177,6 +177,38 @@
   .how-step h3 { font-size: 17px; font-weight: 600; margin-bottom: 10px; }
   .how-step p { font-size: 14.5px; color: var(--text-dim); }
 
+  /* ============ OUTPUT TICKER ============ */
+  .ticker-band {
+    margin: 10px calc(50% - 50vw) 0; padding: 0;
+    border-top: 1px solid var(--hive-line); border-bottom: 1px solid var(--hive-line);
+    background: var(--hive-soft); overflow: hidden;
+    display: flex; align-items: stretch;
+  }
+  .ticker-label {
+    flex-shrink: 0; display: flex; align-items: center; gap: 8px;
+    padding: 12px 18px; background: var(--hive); color: #14100a;
+    font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    white-space: nowrap; z-index: 2;
+  }
+  .ticker-scroll { position: relative; overflow: hidden; flex: 1; display: flex; align-items: center; }
+  .ticker-scroll::before, .ticker-scroll::after {
+    content: ""; position: absolute; top: 0; bottom: 0; width: 60px; z-index: 1; pointer-events: none;
+  }
+  .ticker-scroll::before { left: 0; background: linear-gradient(90deg, var(--bg), transparent); }
+  .ticker-scroll::after { right: 0; background: linear-gradient(270deg, var(--bg), transparent); }
+  .ticker-track {
+    display: flex; gap: 0; white-space: nowrap; will-change: transform;
+    animation: tick 52s linear infinite;
+  }
+  .ticker-band:hover .ticker-track { animation-play-state: paused; }
+  .ticker-track span {
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 12px 0 12px 26px; font-size: 13.5px; font-weight: 500; color: var(--text-dim);
+  }
+  .ticker-track span::after { content: "⬢"; color: var(--hive); font-size: 10px; margin-left: 26px; opacity: 0.7; }
+  .ticker-track b { color: var(--text); font-weight: 600; }
+  @keyframes tick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
   /* ============ FOUNDER ============ */
   .founder-panel {
     background: linear-gradient(135deg, var(--bg-raise) 0%, var(--bg-raise-2) 100%);
@@ -311,8 +343,28 @@
     <p class="hero-note">Working in minutes. Knows your business by day two. No contracts — cancel anytime.</p>
   </header>
 
+  <!-- ============ OUTPUT TICKER ============ -->
+  <div class="ticker-band" aria-label="Examples of measurable agent output — not a guarantee">
+    <div class="ticker-label">⬢ Measurable output</div>
+    <div class="ticker-scroll">
+      <div class="ticker-track" id="tickerTrack">
+        <span>Prospect followed up — <b>touch 5 of 7</b></span>
+        <span>Daily post <b>drafted &amp; approved</b> before breakfast</span>
+        <span>New lead answered in <b>4 minutes</b></span>
+        <span><b>12 comments</b> handled overnight</span>
+        <span>New recruit <b>onboarded to the system</b> on day one</span>
+        <span><b>7-touch streak</b> completed — no prospect dropped</span>
+        <span>Capture-page lead → <b>booked call</b></span>
+        <span><b>30 straight days</b> of content, zero burnout</span>
+        <span>Inbox <b>triaged before your coffee</b></span>
+        <span>First agent <b>graduated to full auto</b></span>
+        <span>Existing customer <b>kept warm</b> — retention touch sent</span>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ FOUNDER ============ -->
-  <section id="founder" style="padding-top: 20px;">
+  <section id="founder" style="padding-top: 40px;">
     <div class="founder-panel reveal">
       <div class="founder-mark">CC</div>
       <div class="founder-body">
@@ -662,6 +714,10 @@
 </footer>
 
 <script>
+  // Ticker: duplicate the item run once so the -50% translate loops seamlessly
+  const tt = document.getElementById('tickerTrack');
+  if (tt) tt.innerHTML += tt.innerHTML;
+
   // Scroll reveal (no reduced-motion gate — Chris ruling, marketing surfaces)
   const io = new IntersectionObserver((entries) => {
     entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
