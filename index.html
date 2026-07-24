@@ -3,368 +3,557 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>KitFire — your AI workforce</title>
+<title>TecHive — your AI duplication workforce</title>
+<meta name="description" content="Six AI agents that run the daily work of building a network marketing business — follow-up, content, leads, engagement, duplication, and triage. $299/mo. Working in minutes." />
+<meta property="og:title" content="TecHive — your AI duplication workforce" />
+<meta property="og:description" content="The tool pile is killing your duplication. TecHive replaces it with six AI agents that do the daily work — trained on what you actually sell." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://itsgreatbusiness.com/" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-<!-- ?v= cache-buster (S221): bump on every app.css/app.js/brand.js edit —
-     a stale cached stylesheet rendered the org avatars unsized/huge live. -->
-<link rel="stylesheet" href="app.css?v=221.3" />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --hive: #f59e0b;
+    --hive-soft: rgba(245, 158, 11, 0.13);
+    --hive-line: rgba(245, 158, 11, 0.4);
+    --ink: #0c1220;
+    --bg: #0b0f17;
+    --bg-raise: #121826;
+    --bg-raise-2: #1a2233;
+    --line: rgba(255, 255, 255, 0.08);
+    --line-strong: rgba(255, 255, 255, 0.16);
+    --text: #eef1f6;
+    --text-dim: #9aa4b5;
+    --text-faint: #626d80;
+    --good: #3ecf8e;
+    --font-brand: "Sora", sans-serif;
+    --font-ui: "Inter", -apple-system, "Segoe UI", sans-serif;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-ui);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  ::selection { background: var(--hive); color: #0b0f17; }
+
+  /* hex field backdrop */
+  .hexfield {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.5;
+    background-image: url("data:image/svg+xml,%3Csvg width='56' height='97' viewBox='0 0 56 97' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23f59e0b' stroke-opacity='0.05'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 97'/%3E%3Cpath d='M28 0L28 34L0 50L0 84L28 97L56 84L56 50L28 34'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  .glow-orb {
+    position: fixed; z-index: 0; pointer-events: none; border-radius: 50%;
+    filter: blur(120px); opacity: 0.16;
+  }
+  .orb-a { width: 560px; height: 560px; background: var(--hive); top: -180px; right: -140px; }
+  .orb-b { width: 420px; height: 420px; background: #ff3d2e; bottom: -160px; left: -120px; opacity: 0.07; }
+
+  .wrap { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  /* ============ NAV ============ */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(11, 15, 23, 0.82); backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-inner {
+    max-width: 1120px; margin: 0 auto; padding: 14px 24px;
+    display: flex; align-items: center; gap: 28px;
+  }
+  .wordmark {
+    font-family: var(--font-brand); font-size: 24px; font-weight: 800;
+    text-decoration: none; letter-spacing: -0.5px;
+  }
+  .wm-tec { color: var(--text); }
+  .wm-hive { color: var(--hive); }
+  .wm-by { font-size: 11px; font-weight: 400; color: var(--text-faint); margin-left: 8px; letter-spacing: 0.2px; }
+  .nav-links { display: flex; gap: 22px; margin-left: auto; align-items: center; }
+  .nav-links a { color: var(--text-dim); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.15s; }
+  .nav-links a:hover { color: var(--text); }
+  .btn-login {
+    padding: 9px 18px; border: 1px solid var(--hive-line); border-radius: 10px;
+    color: var(--hive) !important; font-weight: 600 !important; transition: all 0.15s;
+  }
+  .btn-login:hover { background: var(--hive-soft); }
+  @media (max-width: 720px) { .nav-links a:not(.btn-login) { display: none; } }
+
+  /* ============ HERO ============ */
+  .hero { padding: 96px 0 72px; text-align: center; }
+  .hero-kicker {
+    display: inline-block; padding: 6px 16px; border: 1px solid var(--hive-line);
+    border-radius: 100px; background: var(--hive-soft); color: var(--hive);
+    font-size: 13px; font-weight: 600; letter-spacing: 0.4px; margin-bottom: 28px;
+  }
+  h1 {
+    font-family: var(--font-brand); font-size: clamp(34px, 5.6vw, 60px);
+    font-weight: 800; line-height: 1.12; letter-spacing: -1.5px; max-width: 820px; margin: 0 auto 22px;
+  }
+  h1 .amber { color: var(--hive); }
+  .hero-sub { font-size: clamp(16px, 2vw, 19px); color: var(--text-dim); max-width: 640px; margin: 0 auto 38px; }
+  .hero-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .btn-primary {
+    display: inline-block; padding: 15px 32px; background: var(--hive); color: #14100a;
+    font-weight: 700; font-size: 16px; text-decoration: none; border-radius: 12px;
+    box-shadow: 0 6px 28px rgba(245, 158, 11, 0.35); transition: transform 0.12s, box-shadow 0.2s;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 36px rgba(245, 158, 11, 0.45); }
+  .btn-primary:active { transform: translateY(0) scale(0.98); }
+  .btn-ghost {
+    display: inline-block; padding: 15px 32px; border: 1px solid var(--line-strong);
+    color: var(--text); font-weight: 600; font-size: 16px; text-decoration: none;
+    border-radius: 12px; transition: border-color 0.15s, background 0.15s;
+  }
+  .btn-ghost:hover { border-color: var(--hive-line); background: var(--hive-soft); }
+  .hero-note { margin-top: 18px; font-size: 13px; color: var(--text-faint); }
+
+  /* staggered hero entrance */
+  .hero > * { opacity: 0; transform: translateY(18px); animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) forwards; }
+  .hero > *:nth-child(1) { animation-delay: 0.05s; }
+  .hero > *:nth-child(2) { animation-delay: 0.15s; }
+  .hero > *:nth-child(3) { animation-delay: 0.28s; }
+  .hero > *:nth-child(4) { animation-delay: 0.42s; }
+  .hero > *:nth-child(5) { animation-delay: 0.55s; }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+
+  /* ============ SECTIONS ============ */
+  section { padding: 76px 0; }
+  .sec-kicker { color: var(--hive); font-weight: 700; font-size: 13px; letter-spacing: 1.6px; text-transform: uppercase; margin-bottom: 14px; }
+  h2 { font-family: var(--font-brand); font-size: clamp(26px, 3.6vw, 38px); font-weight: 700; letter-spacing: -0.8px; line-height: 1.2; margin-bottom: 16px; max-width: 720px; }
+  .sec-sub { color: var(--text-dim); max-width: 640px; font-size: 17px; margin-bottom: 44px; }
+
+  /* scroll reveal */
+  .reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.2, 0.7, 0.3, 1); }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* ============ PAIN ============ */
+  .pain-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
+  .pain-card {
+    background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 26px 24px; transition: border-color 0.2s, transform 0.2s;
+  }
+  .pain-card:hover { border-color: var(--hive-line); transform: translateY(-3px); }
+  .pain-num { font-family: var(--font-brand); font-size: 30px; font-weight: 800; color: var(--hive); margin-bottom: 10px; }
+  .pain-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .pain-card p { font-size: 14px; color: var(--text-dim); }
+
+  /* ============ CREW ============ */
+  .crew-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+  .crew-card {
+    background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 28px 26px; position: relative; overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  }
+  .crew-card:hover { border-color: var(--hive-line); transform: translateY(-4px); box-shadow: 0 14px 40px rgba(0,0,0,0.35); }
+  .crew-card::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--hive), transparent);
+    opacity: 0; transition: opacity 0.25s;
+  }
+  .crew-card:hover::before { opacity: 1; }
+  .crew-role { color: var(--hive); font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 8px; }
+  .crew-card h3 { font-family: var(--font-brand); font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+  .crew-card p { font-size: 14.5px; color: var(--text-dim); }
+
+  /* ============ HOW ============ */
+  .how-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; counter-reset: step; }
+  .how-step {
+    background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 30px 26px; position: relative;
+  }
+  .how-step::before {
+    counter-increment: step; content: counter(step);
+    display: flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; border-radius: 12px; margin-bottom: 18px;
+    background: var(--hive-soft); border: 1px solid var(--hive-line);
+    color: var(--hive); font-family: var(--font-brand); font-weight: 800; font-size: 18px;
+  }
+  .how-step h3 { font-size: 17px; font-weight: 600; margin-bottom: 10px; }
+  .how-step p { font-size: 14.5px; color: var(--text-dim); }
+
+  /* ============ TRUST BAND ============ */
+  .trust-band {
+    background: var(--bg-raise); border: 1px solid var(--line); border-radius: 18px;
+    padding: 40px 38px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 28px;
+  }
+  .trust-item h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+  .trust-item h3 .tick { color: var(--good); font-size: 18px; }
+  .trust-item p { font-size: 14px; color: var(--text-dim); }
+
+  /* ============ MARKETHIVE ============ */
+  .mh-panel {
+    background: linear-gradient(135deg, var(--bg-raise) 0%, var(--bg-raise-2) 100%);
+    border: 1px solid var(--line-strong); border-radius: 18px; padding: 44px 40px;
+  }
+  .mh-panel h2 { margin-bottom: 12px; }
+  .mh-list { list-style: none; margin: 22px 0 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px 26px; }
+  .mh-list li { padding-left: 26px; position: relative; font-size: 15px; color: var(--text-dim); }
+  .mh-list li::before { content: "⬢"; position: absolute; left: 0; color: var(--hive); font-size: 13px; }
+  .mh-fine { font-size: 13px; color: var(--text-faint); max-width: 720px; }
+
+  /* ============ PRICING ============ */
+  .price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; max-width: 780px; margin: 0 auto; }
+  .price-card {
+    background: var(--bg-raise); border: 1px solid var(--line); border-radius: 18px;
+    padding: 38px 34px; text-align: center; position: relative;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .price-card:hover { transform: translateY(-4px); }
+  .price-card.hot { border-color: var(--hive-line); box-shadow: 0 0 0 1px var(--hive-line), 0 18px 50px rgba(245, 158, 11, 0.08); }
+  .price-flag {
+    position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+    background: var(--hive); color: #14100a; font-size: 12px; font-weight: 700;
+    padding: 4px 14px; border-radius: 100px; white-space: nowrap;
+  }
+  .price-tier { font-family: var(--font-brand); font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .price-amount { font-family: var(--font-brand); font-size: 46px; font-weight: 800; letter-spacing: -1.5px; }
+  .price-amount span { font-size: 17px; font-weight: 500; color: var(--text-dim); letter-spacing: 0; }
+  .price-note { font-size: 13.5px; color: var(--text-dim); margin: 8px 0 24px; }
+  .price-feats { list-style: none; text-align: left; margin-bottom: 28px; }
+  .price-feats li { padding: 7px 0 7px 26px; position: relative; font-size: 14.5px; color: var(--text-dim); border-bottom: 1px solid var(--line); }
+  .price-feats li:last-child { border-bottom: none; }
+  .price-feats li::before { content: "✓"; position: absolute; left: 2px; color: var(--good); font-weight: 700; }
+  .price-cta { display: block; }
+  .price-fine { text-align: center; margin-top: 22px; font-size: 13px; color: var(--text-faint); }
+
+  /* ============ FAQ ============ */
+  .faq-list { max-width: 780px; }
+  details {
+    background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--radius);
+    margin-bottom: 12px; overflow: hidden;
+  }
+  summary {
+    padding: 20px 24px; cursor: pointer; font-weight: 600; font-size: 15.5px;
+    list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; color: var(--hive); font-size: 22px; font-weight: 400; transition: transform 0.2s; flex-shrink: 0; }
+  details[open] summary::after { transform: rotate(45deg); }
+  details p { padding: 0 24px 20px; font-size: 14.5px; color: var(--text-dim); }
+
+  /* ============ FINAL CTA ============ */
+  .final-cta { text-align: center; padding: 90px 0 100px; }
+  .final-cta h2 { margin: 0 auto 16px; }
+  .final-cta .sec-sub { margin: 0 auto 36px; }
+
+  /* ============ FOOTER ============ */
+  footer { border-top: 1px solid var(--line); padding: 36px 0; }
+  .foot-inner { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+  .foot-inner .wordmark { font-size: 19px; }
+  .foot-links { margin-left: auto; display: flex; gap: 22px; }
+  .foot-links a { color: var(--text-faint); font-size: 13px; text-decoration: none; }
+  .foot-links a:hover { color: var(--text-dim); }
+  .foot-legal { width: 100%; font-size: 12px; color: var(--text-faint); }
+</style>
 </head>
 <body>
 
-<!-- ============ LEFT SIDEBAR (platform mode) ============ -->
-<aside id="sidebar">
-  <div class="brand">
-    <span class="brand-kit">Kit</span><span class="brand-fire">Fire</span>
-    <span class="brand-dot" title="Connected"></span>
-  </div>
+<div class="hexfield"></div>
+<div class="glow-orb orb-a"></div>
+<div class="glow-orb orb-b"></div>
 
-  <nav class="nav-section">
-    <div class="nav-label">Your agents</div>
-    <div id="agentNav"></div>
-    <button class="nav-item nav-add" data-view="catalog">
-      <span class="nav-ico">+</span> Add an agent
-    </button>
-  </nav>
-
-  <div id="healthStrip">
-    <span id="healthDot" class="health-dot"></span>
-    <span id="healthText">All agents ran on time</span>
-    <button id="pauseAllBtn" class="pause-btn" title="Pause all agents">&#10074;&#10074;</button>
-  </div>
-
-  <nav class="nav-section">
-    <div class="nav-label" id="workspaceLabel">Workspace</div>
-    <div id="workspaceItems">
-    <button class="nav-item" data-view="approvals">
-      <span class="nav-ico">&#10003;</span> Approvals
-      <span id="approvalBadge" class="badge hidden"></span>
-    </button>
-    <button class="nav-item" data-view="activity">
-      <span class="nav-ico">&#8635;</span> Activity
-    </button>
-    <button class="nav-item" data-view="connections">
-      <span class="nav-ico">&#9741;</span> Connections
-    </button>
-    <button class="nav-item" data-view="billing">
-      <span class="nav-ico">&#9635;</span> Billing
-    </button>
-    <button class="nav-item" data-view="refer">
-      <span class="nav-ico">&#9829;</span> Refer &amp; earn
-    </button>
-    </div>
-    <!-- Contextual sub-menu (S221 redesign): while Refer & earn is open
-         on the TecHive skin, the Workspace list swaps to this menu — the
-         sidebar changes with what you're doing instead of stacking cards. -->
-    <div id="referSubNav" class="hidden">
-      <button class="nav-item" data-refertab="overview"><span class="nav-ico">&#9829;</span> Overview</button>
-      <button class="nav-item" data-refertab="organization"><span class="nav-ico">&#9776;</span> Organization</button>
-      <button class="nav-item" data-refertab="markethive"><span class="nav-ico">&#11042;</span> MarketHive</button>
-      <button class="nav-item" id="referBackBtn"><span class="nav-ico">&#8592;</span> Back to workspace</button>
-    </div>
-  </nav>
-
-  <div class="sidebar-foot">
-    <div class="usage-card" id="usageCard" title="Your KitFire usage">
-      <div class="usage-head">
-        <span>Usage</span>
-        <span class="usage-plan" id="usagePlanTag">Starter</span>
-      </div>
-      <div class="usage-row">
-        <div class="usage-labels"><span>Session</span><span id="sessPct">—</span></div>
-        <div class="u-bar"><div class="u-fill" id="sessFill"></div></div>
-        <div class="usage-reset" id="sessReset"></div>
-      </div>
-      <div class="usage-row">
-        <div class="usage-labels"><span>This week</span><span id="weekPct">—</span></div>
-        <div class="u-bar"><div class="u-fill" id="weekFill"></div></div>
-        <div class="usage-reset" id="weekReset"></div>
-      </div>
-    </div>
-    <div class="seat-chip">
-      <div class="seat-avatar" id="seatAvatar">C</div>
-      <div class="seat-meta">
-        <div class="seat-name" id="seatName">Demo seat</div>
-        <div class="seat-plan" id="seatPlan">Starter · 2 agents</div>
-      </div>
+<nav>
+  <div class="nav-inner">
+    <a class="wordmark" href="/"><span class="wm-tec">Tec</span><span class="wm-hive">Hive</span><span class="wm-by">by KitFire</span></a>
+    <div class="nav-links">
+      <a href="#crew">The agents</a>
+      <a href="#how">How it works</a>
+      <a href="#markethive">MarketHive</a>
+      <a href="#pricing">Pricing</a>
+      <a class="btn-login" href="/app/">Member login</a>
     </div>
   </div>
-</aside>
+</nav>
 
-<!-- ============ MAIN COLUMN ============ -->
-<main id="main">
+<div class="wrap">
 
-  <!-- top bar: agent chips (rail mode) + context header -->
-  <header id="topbar">
-    <button id="menuBtn" class="icon-btn" title="Menu" aria-label="Menu">&#9776;</button>
-    <div id="chipRow"></div>
-    <div class="topbar-right">
-      <button id="fullscreenBtn" class="icon-btn" title="Open full screen" aria-label="Open full screen">&#x26F6;</button>
-      <span id="topbarAvatar" class="topbar-avatar" title=""></span>
+  <!-- ============ HERO ============ -->
+  <header class="hero">
+    <div class="hero-kicker">⬢ &nbsp;An AI workforce for network marketers</div>
+    <h1>Your business doesn't need another tool.<br />It needs a <span class="amber">workforce</span>.</h1>
+    <p class="hero-sub">Six AI agents that do the daily work of building your business — the follow-up,
+    the content, the leads, the engagement — trained on what you actually sell.
+    You approve from your phone. They do the rest.</p>
+    <div class="hero-ctas">
+      <a class="btn-primary js-buy-monthly" href="https://buy.stripe.com/eVq7sMaGH9C4cSRgo03Ru07">Get your workforce — $299/mo</a>
+      <a class="btn-ghost" href="/app/?demo=1">See the back office</a>
     </div>
+    <p class="hero-note">Working in minutes. Knows your business by day two. No contracts — cancel anytime.</p>
   </header>
 
-  <!-- ===== VIEW: chat ===== -->
-  <section id="view-chat" class="view">
-    <div id="chatHeader">
-      <div>
-        <div id="chatAgentName" class="chat-agent-name"></div>
-        <div id="chatAgentSub" class="chat-agent-sub"></div>
-      </div>
-      <div class="chat-header-actions">
-        <span id="tierChip" class="tier-chip"></span>
-        <button id="customizeBtn" class="btn-ghost">Customize</button>
-      </div>
+  <!-- ============ PAIN ============ -->
+  <section id="pain">
+    <div class="reveal">
+      <div class="sec-kicker">The problem</div>
+      <h2>The tool pile is killing your duplication.</h2>
+      <p class="sec-sub">A CRM, an email tool, a content calendar, a social strategy — nobody duplicates
+      that. Here's where the business actually leaks:</p>
     </div>
-    <div id="thread" aria-live="polite"></div>
-    <div id="composerWrap">
-      <div id="composer">
-        <textarea id="composerInput" rows="1" placeholder="Ask KitFire anything…"></textarea>
-        <button id="sendBtn" title="Send" aria-label="Send">&#8593;</button>
+    <div class="pain-grid">
+      <div class="pain-card reveal">
+        <div class="pain-num">01</div>
+        <h3>Follow-up dies at two touches</h3>
+        <p>Converting a prospect takes 4–7 meaningful touchpoints. The average distributor makes two, feels pushy, and quits. That gap is where recruiting dies.</p>
       </div>
-      <div class="composer-hint">KitFire never moves money or shares credentials — at any autonomy level.</div>
+      <div class="pain-card reveal">
+        <div class="pain-num">02</div>
+        <h3>Content eats the day</h3>
+        <p>Three hours making posts is a very busy day that produced zero exposures. The work that feels productive usually isn't.</p>
+      </div>
+      <div class="pain-card reveal">
+        <div class="pain-num">03</div>
+        <h3>Leads go cold in minutes</h3>
+        <p>Someone opts in, life happens, and by the time you reply they've forgotten they asked. Speed is the whole game and nobody has it.</p>
+      </div>
+      <div class="pain-card reveal">
+        <div class="pain-num">04</div>
+        <h3>Your team can't copy your hustle</h3>
+        <p>Whatever system needs YOU to run it doesn't duplicate. Your new person needs the same engine you have, on day one.</p>
+      </div>
     </div>
   </section>
 
-  <!-- ===== VIEW: catalog ===== -->
-  <section id="view-catalog" class="view hidden">
-    <div class="view-head">
-      <h1>Add an agent</h1>
-      <p>Your whole AI workforce, in one place. Start with what you have — unlock everyone with Full Workforce. Each agent learns your business from day one.</p>
+  <!-- ============ CREW ============ -->
+  <section id="crew">
+    <div class="reveal">
+      <div class="sec-kicker">The workforce</div>
+      <h2>Six agents. Every leak plugged.</h2>
+      <p class="sec-sub">Each one works around the clock and brings you their work for approval —
+      nothing goes out without your OK until you decide it can.</p>
     </div>
-
-    <div id="pricingBand">
-      <div class="billing-toggle" role="group" aria-label="Billing period">
-        <button id="billMonthly" class="bill-opt active">Monthly</button>
-        <button id="billAnnual" class="bill-opt">Annual <span class="bill-save">2 months free</span></button>
+    <div class="crew-grid">
+      <div class="crew-card reveal">
+        <div class="crew-role">Follow-Up Agent</div>
+        <h3>Never drops a prospect again</h3>
+        <p>Runs every prospect to seven-plus touches with messages drafted for your approval. Never pushy, never forgets, never gets discouraged on touch three.</p>
       </div>
-      <div class="price-cards">
-        <div class="price-card current">
-          <div class="price-tier">Starter</div>
-          <div class="price-amount"><span id="starterPrice">$99</span><span class="price-per" id="starterPer">/mo</span></div>
-          <div class="price-note">Founding rate</div>
-          <ul class="price-feats">
-            <li>Triage Agent + Ask KitFire</li>
-            <li><b>2 seats included</b> &middot; extra seats $25/mo</li>
-            <li>Approve-first autonomy, ready day one</li>
-            <li>Learns your business from every correction</li>
-          </ul>
-          <div class="price-cta-row"><span class="price-current-tag">&#10003; Your plan</span></div>
-        </div>
-        <div class="price-card featured">
-          <div class="price-flag">Most popular</div>
-          <div class="price-tier">Full Workforce</div>
-          <div class="price-amount"><span id="fullPrice">$299</span><span class="price-per" id="fullPer">/mo</span></div>
-          <div class="price-note">Founding rate · every agent, current and future</div>
-          <ul class="price-feats">
-            <li>Every agent — current and every one we add</li>
-            <li><b>3 seats included</b> &middot; extra seats $25/mo</li>
-            <li>Full trust ladder: graduate any action to auto</li>
-            <li>Priority runs + the full usage allotment</li>
-          </ul>
-          <div class="price-cta-row"><button class="btn-primary" id="upgradeBtn">Upgrade</button></div>
-        </div>
+      <div class="crew-card reveal">
+        <div class="crew-role">Content Agent</div>
+        <h3>Daily content in your style</h3>
+        <p>Posts and blogs written the way you talk — plus the graphics to go with them. Your feed stays alive while you're at your kid's game.</p>
       </div>
-      <div class="price-foot">Every extra seat adds room in your usage tank — one more person never makes the meter feel tighter. Prices lock at your founding rate for as long as you stay subscribed. KitFire never moves money or holds your credentials — at any tier.</div>
+      <div class="crew-card reveal">
+        <div class="crew-role">Lead Agent</div>
+        <h3>Answers in minutes, not days</h3>
+        <p>Every capture-page lead gets a response while it's still warm — qualified, answered, and moved toward a conversation with you.</p>
+      </div>
+      <div class="crew-card reveal">
+        <div class="crew-role">Engagement Agent</div>
+        <h3>Works the comments 24/7</h3>
+        <p>Comment and DM replies drafted around the clock, waiting for your approval. Your audience gets answered without you living on your phone.</p>
+      </div>
+      <div class="crew-card reveal">
+        <div class="crew-role">Duplication Agent</div>
+        <h3>Onboards your team onto the same engine</h3>
+        <p>Every new recruit gets walked onto the exact system you run — first steps tracked, nudges sent, existing customers kept warm. Duplication, finally.</p>
+      </div>
+      <div class="crew-card reveal">
+        <div class="crew-role">Triage Agent</div>
+        <h3>Sorts the noise, surfaces the money</h3>
+        <p>Company notifications, prospect replies, and things involving money — sorted so the important stuff is always on top when you open your day.</p>
+      </div>
     </div>
-
-    <div id="catalogGrid"></div>
   </section>
 
-  <!-- ===== VIEW: approvals ===== -->
-  <section id="view-approvals" class="view hidden">
-    <div class="view-head">
-      <h1>Approvals</h1>
-      <p>Work your agents prepared and are waiting on you to release. Approve, edit, or reject — every decision teaches them.</p>
+  <!-- ============ HOW ============ -->
+  <section id="how">
+    <div class="reveal">
+      <div class="sec-kicker">How it works</div>
+      <h2>Working in minutes. Knows your business by day two.</h2>
     </div>
-    <div id="approvalList"></div>
-  </section>
-
-  <!-- ===== VIEW: activity ===== -->
-  <section id="view-activity" class="view hidden">
-    <div class="view-head">
-      <h1>Activity</h1>
-      <p>Everything your agents have done, on the record.</p>
-    </div>
-    <div id="activityList"></div>
-  </section>
-
-  <!-- ===== VIEW: connections ===== -->
-  <section id="view-connections" class="view hidden">
-    <div class="view-head">
-      <h1>Connections</h1>
-      <p>Your agents can only work with what you connect — and you can disconnect anything, any time. Every connector comes pre-taught: connect QuickBooks and your Invoice Chaser knows what an aging report is on day one.</p>
-    </div>
-    <div class="conn-search-row">
-      <input type="text" id="connSearch" placeholder="Search connectors&hellip;" />
-    </div>
-    <div id="connGrid"></div>
-    <div class="conn-foot">KitFire reads through secure, revocable connections. It never stores your passwords — connecting happens on the provider's own page, and you approve exactly what each agent can see.</div>
-  </section>
-
-  <!-- ===== VIEW: billing ===== -->
-  <section id="view-billing" class="view hidden">
-    <div class="view-head">
-      <h1>Billing</h1>
-      <p>Your plan, your seats, your invoices — and the promises that don't change at any price.</p>
-    </div>
-    <div class="billing-wrap">
-      <div class="bill-card" id="planCard"></div>
-      <div class="bill-card">
-        <div class="bill-card-title">Seats <span id="seatCount" class="bill-hint"></span></div>
-        <div id="seatList"></div>
-        <button class="btn-ghost" id="addSeatBtn">Add a seat &middot; $25/mo</button>
-        <div class="bill-hint role-hint">Only admins can add seats or change billing.</div>
+    <div class="how-steps">
+      <div class="how-step reveal">
+        <h3>Join TecHive</h3>
+        <p>One subscription. Your back office and your six agents are minted automatically — your access code lands in your inbox before you've closed the tab.</p>
       </div>
-      <div class="bill-card">
-        <div class="bill-card-title">Invoices</div>
-        <div id="invoiceList"></div>
-        <button class="btn-ghost" id="portalBtn">Manage billing</button>
-        <div class="bill-hint">Update your card, switch to annual, or cancel — handled securely by Stripe.</div>
+      <div class="how-step reveal">
+        <h3>We learn what you sell</h3>
+        <p>TecHive scans your replicated site and your company's product line, and your agents are trained on it. You answer a few questions; they do the studying.</p>
       </div>
-      <div class="bill-card trust-card">
-        <div class="bill-card-title">What KitFire will never do</div>
-        <ul class="trust-list">
-          <li>&#128274; Move money or make payments on your behalf</li>
-          <li>&#128274; Store or ask for your passwords</li>
-          <li>&#128274; Cold-call anyone — ever</li>
-          <li>&#128274; Charge you an overage without asking first</li>
-          <li>&#128274; Delete your team's history — even if a seat leaves</li>
+      <div class="how-step reveal">
+        <h3>Approve from your phone</h3>
+        <p>Every message, post, and reply arrives as a draft for your one-tap approval. When an agent has earned your trust, you can graduate it to run on its own.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TRUST ============ -->
+  <section id="trust">
+    <div class="trust-band reveal">
+      <div class="trust-item">
+        <h3><span class="tick">✓</span> Compliance is welded in</h3>
+        <p>Your agents never make income claims — it's enforced by the system, not a setting. Product talk stays inside your company's published language.</p>
+      </div>
+      <div class="trust-item">
+        <h3><span class="tick">✓</span> You hold the reins</h3>
+        <p>Everything starts approve-first. Autonomy is earned one clean approval at a time, and you can pause the whole workforce with one button.</p>
+      </div>
+      <div class="trust-item">
+        <h3><span class="tick">✓</span> Only your own contacts</h3>
+        <p>Agents message the people your own funnels captured — no scraped lists, no cold spam, no games with your reputation.</p>
+      </div>
+      <div class="trust-item">
+        <h3><span class="tick">✓</span> Refer &amp; earn, built in</h3>
+        <p>Your back office includes your personal referral link and a live dashboard of your organization — three levels deep, paid only on collected payments. Your dashboard shows your real numbers, never projections.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MARKETHIVE ============ -->
+  <section id="markethive">
+    <div class="mh-panel reveal">
+      <div class="sec-kicker">MarketHive members</div>
+      <h2>Your MarketHive presence, built for you. Free.</h2>
+      <p class="sec-sub" style="margin-bottom: 0;">Hold MarketHive's Entrepreneur One upgrade and TecHive builds out your
+      full MarketHive presence as a one-time, done-for-you setup:</p>
+      <ul class="mh-list">
+        <li>Profile header that actually sells you</li>
+        <li>Your blog group, set up and styled</li>
+        <li>Group capture page</li>
+        <li>Group splash page</li>
+        <li>Email autoresponders</li>
+        <li>Comment monitoring wired to your Engagement Agent</li>
+      </ul>
+      <p class="mh-fine">Entrepreneur One ($100/mo) is MarketHive's own tier, paid by you directly to MarketHive —
+      it's what unlocks Super Groups and their features on their platform, and it stays your asset.
+      TecHive's build-out rides on top of it, once, at no charge.</p>
+    </div>
+  </section>
+
+  <!-- ============ PRICING ============ -->
+  <section id="pricing">
+    <div class="reveal" style="text-align: center;">
+      <div class="sec-kicker">Pricing</div>
+      <h2 style="margin-left: auto; margin-right: auto;">One plan. The whole workforce.</h2>
+      <p class="sec-sub" style="margin-left: auto; margin-right: auto;">No tiers to decode. Every TecHive agent, your back office, and the referral program — one price.</p>
+    </div>
+    <div class="price-grid">
+      <div class="price-card reveal">
+        <div class="price-tier">TecHive Monthly</div>
+        <div class="price-amount">$299<span>/mo</span></div>
+        <p class="price-note">Founding rate</p>
+        <ul class="price-feats">
+          <li>All six TecHive agents</li>
+          <li>1 seat included · extra seats $25/mo</li>
+          <li>Done-for-you setup — trained on what you sell</li>
+          <li>Referral dashboard: your link, your organization, your ledger</li>
+          <li>Cancel anytime</li>
         </ul>
-        <div class="bill-hint">These hold at every plan and every autonomy level. They're not settings.</div>
+        <a class="btn-primary price-cta js-buy-monthly" href="https://buy.stripe.com/eVq7sMaGH9C4cSRgo03Ru07">Start monthly</a>
+      </div>
+      <div class="price-card hot reveal">
+        <div class="price-flag">2 months free</div>
+        <div class="price-tier">TecHive Annual</div>
+        <div class="price-amount">$2,990<span>/yr</span></div>
+        <p class="price-note">Twelve months for the price of ten</p>
+        <ul class="price-feats">
+          <li>Everything in monthly</li>
+          <li>Locked founding rate for the full year</li>
+          <li>Same everything — you just keep two months</li>
+        </ul>
+        <a class="btn-primary price-cta js-buy-annual" href="https://buy.stripe.com/aFabJ216729CcSRfjW3Ru08">Start annual</a>
+      </div>
+    </div>
+    <p class="price-fine">Payments by Stripe. Have a referral code? Use your sponsor's link or enter their code at checkout — they'll get credit.</p>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section id="faq">
+    <div class="reveal">
+      <div class="sec-kicker">Questions</div>
+      <h2>The ones everyone asks.</h2>
+    </div>
+    <div class="faq-list">
+      <details class="reveal">
+        <summary>Do the agents post and message without asking me?</summary>
+        <p>Not until you say so. Everything starts approve-first: agents draft, you approve with a tap. As an agent earns a track record with you, you can graduate individual actions to run automatically — and pull them back any time.</p>
+      </details>
+      <details class="reveal">
+        <summary>Will it work with my company?</summary>
+        <p>TecHive is built for network marketers in any company. During setup we scan your replicated site and your company's public product line, and your agents are trained on it — your products, your language, your links.</p>
+      </details>
+      <details class="reveal">
+        <summary>Will my content sound like AI wrote it?</summary>
+        <p>Your agents study how you actually write and talk, and draft in your style. You approve everything, so nothing goes out that doesn't sound like you decided it should.</p>
+      </details>
+      <details class="reveal">
+        <summary>Will TecHive make income claims for me?</summary>
+        <p>Never — and that's a feature. Income claims are blocked at the system level in everything your agents produce. Your business stays clean, your company's compliance team stays happy.</p>
+      </details>
+      <details class="reveal">
+        <summary>How does the referral program work?</summary>
+        <p>Every member gets a personal referral link. Refer people and your back office shows your organization three levels deep, with commissions paid only on actually-collected payments — real numbers on your dashboard, never projections. Full details are inside your back office.</p>
+      </details>
+      <details class="reveal">
+        <summary>Do I need to be a MarketHive member?</summary>
+        <p>No. TecHive works for any network marketer. If you ARE on MarketHive with Entrepreneur One, you get the free one-time build-out of your MarketHive presence on top.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============ FINAL CTA ============ -->
+  <section class="final-cta">
+    <div class="reveal">
+      <h2>Stop being the whole system.<br /><span style="color: var(--hive);">Hire the workforce.</span></h2>
+      <p class="sec-sub">Six agents, working in minutes, trained on what you sell.</p>
+      <div class="hero-ctas">
+        <a class="btn-primary js-buy-monthly" href="https://buy.stripe.com/eVq7sMaGH9C4cSRgo03Ru07">Get TecHive — $299/mo</a>
+        <a class="btn-ghost" href="/app/">Member login</a>
       </div>
     </div>
   </section>
 
-  <!-- ===== VIEW: refer & earn ===== -->
-  <section id="view-refer" class="view hidden">
-    <div class="view-head">
-      <h1>Refer &amp; earn</h1>
-      <p>Know another business that should have a workforce? Send them your link — you earn 15% of everything they spend for their first 12 months.</p>
-    </div>
-    <div id="refer-overview" class="refer-tab">
-    <div class="refer-wrap">
-      <div class="bill-card">
-        <div class="bill-card-title">Your link</div>
-        <div class="refer-link-row">
-          <code id="referLink">kitfire.ai/start?ref=demo-dana</code>
-          <button class="mini-btn fire" id="copyReferBtn">Copy</button>
-        </div>
-        <div class="refer-steps">
-          <div class="refer-step"><b>1.</b> Share your link</div>
-          <div class="refer-step"><b>2.</b> They start their workforce</div>
-          <div class="refer-step"><b>3.</b> You get 15% of what they spend, monthly, for a year</div>
-        </div>
-      </div>
-      <div class="bill-card">
-        <div class="bill-card-title">Your earnings</div>
-        <div class="refer-earnings" id="referEarnings">$0</div>
-        <div class="bill-hint" id="referTally">0 referrals so far &middot; payouts land after their payment clears</div>
-        <div class="refer-example" id="referExample">A referred Full Workforce business = about <b>$45/mo</b> back to you &middot; annual prepay pays you <b>~$448</b> at once.</div>
-      </div>
-    </div>
-    </div>
+</div>
 
-    <div id="refer-markethive" class="refer-tab hidden techive-only">
-    <div class="refer-wrap">
-      <!-- TecHive skin only (S221): MarketHive signup + the member's own MH
-           referral link. MarketHive's airdrop program credits the E1 member
-           when their referrals join MH through their link — that reward is
-           MarketHive's program, paid by MarketHive in crypto; TecHive only
-           stores and surfaces the link (we never touch the airdrop). -->
-      <div class="bill-card techive-only">
-        <div class="bill-card-title">MarketHive</div>
-        <div class="refer-example">The full MarketHive experience — Super Group, blog group, capture &amp; splash pages — requires MarketHive's <b>Entrepreneur One</b>. <a id="mhSignupLink" href="https://markethive.com" target="_blank" rel="noopener">Sign up at markethive.com &rarr;</a></div>
-        <div class="bill-card-title" style="margin-top:14px">Your MarketHive link</div>
-        <div class="refer-link-row">
-          <input id="mhLinkInput" type="url" placeholder="https://markethive.com/yourname" />
-          <button class="mini-btn fire" id="mhLinkSaveBtn">Save</button>
-        </div>
-        <div class="bill-hint">When people you refer join MarketHive through your link, MarketHive's airdrop program credits you for the referral — that reward comes from MarketHive, on their platform.</div>
-      </div>
+<footer>
+  <div class="wrap foot-inner">
+    <a class="wordmark" href="/"><span class="wm-tec">Tec</span><span class="wm-hive">Hive</span><span class="wm-by">by KitFire</span></a>
+    <div class="foot-links">
+      <a href="/app/">Member login</a>
+      <a href="https://kitfire.ai/privacy.html">Privacy</a>
+      <a href="https://kitfire.ai">KitFire</a>
     </div>
-    </div>
-
-    <div id="refer-organization" class="refer-tab hidden techive-only">
-      <!-- Org chart drawn as a TREE (S221 redesign): root = the member,
-           branches three levels down. Production data = referral_overview
-           task (contract in TECHIVE_ONEPAGER.md); demo tree in app.js. -->
-      <div class="bill-card org-card">
-        <div class="bill-card-title">Your organization</div>
-        <div class="bill-hint" style="margin-bottom:10px">Everyone stays on your chart for good — position never rewrites. A member only pauses <i>earning you commissions</i> while their own subscription is inactive. Amounts are yours alone — no member ever sees another member's earnings.</div>
-        <div class="org-toggle">
-          <button class="org-mode active" data-orgmode="chart">Chart</button>
-          <button class="org-mode" data-orgmode="sheet">Sheet</button>
-          <span class="org-legend"><span class="org-legend-seal"></span> MarketHive Entrepreneur One &middot; color = active, gray = position held</span>
-        </div>
-        <div id="orgCanvas"></div>
-        <div id="orgTable" class="hidden"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== VIEW: spawn wizard ===== -->
-  <section id="view-spawn" class="view hidden">
-    <div class="view-head">
-      <h1 id="spawnTitle">Set up your agent</h1>
-      <p>Tell it what you want in your own words. No settings, no setup screens — it builds itself around your business.</p>
-    </div>
-    <div class="spawn-card">
-      <label for="spawnGoal" class="spawn-label">What should this agent handle for you?</label>
-      <textarea id="spawnGoal" rows="4" placeholder="e.g. Watch my inbox. Anything from a customer or about money, tell me by 7am and have a reply ready for me to approve."></textarea>
-      <div class="spawn-actions">
-        <button id="spawnBuildBtn" class="btn-primary">Build my agent</button>
-        <button id="spawnCancelBtn" class="btn-ghost">Cancel</button>
-      </div>
-      <div id="spawnResult" class="hidden">
-        <div class="spawn-plan-head">Here's what I'll do</div>
-        <ul id="spawnPlan"></ul>
-        <div class="spawn-note">Starts in <b>approve-first</b> mode: it prepares everything, you release anything outbound. You can loosen that later — one action at a time, whenever you're ready.</div>
-        <div class="spawn-actions">
-          <button id="spawnConfirmBtn" class="btn-primary">Looks right — turn it on</button>
-          <button id="spawnReviseBtn" class="btn-ghost">Let me reword it</button>
-        </div>
-      </div>
-    </div>
-  </section>
-</main>
-
-<!-- ============ RIGHT RAIL: agent detail ============ -->
-<aside id="detailRail">
-  <div class="detail-head">
-    <div id="detailAgentName" class="detail-name"></div>
-    <div id="detailAgentDept" class="detail-dept"></div>
+    <p class="foot-legal">© 2026 KitFire AI Inc. TecHive is a product of KitFire AI Inc. TecHive builds and operates
+    AI marketing agents; it is not affiliated with, endorsed by, or a distributor of any network marketing company.
+    Results depend on your business and your effort — TecHive makes no income claims, ever. That's the point.</p>
   </div>
+</footer>
 
-  <div class="detail-section">
-    <div class="detail-label">What it does for you</div>
-    <div id="detailMission" class="detail-mission"></div>
-  </div>
+<script>
+  // Scroll reveal (no reduced-motion gate — Chris ruling, marketing surfaces)
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
 
-  <div class="detail-section">
-    <div class="detail-label">Autonomy — the trust ladder</div>
-    <div id="ladder"></div>
-    <div class="floor-row">
-      <span class="floor-ico">&#128274;</span>
-      <span>Move money, credentials, cold calls — <b>never</b>, at any level.</span>
-    </div>
-  </div>
+  // Referral attribution: ?ref=CODE (or ?client_reference_id=ref-CODE) decorates
+  // every Stripe payment link with client_reference_id=ref-CODE so the webhook's
+  // sponsor walk credits the sponsor (S221 attribution rail). Code remembered for
+  // the visit so navigation doesn't drop it.
+  (function () {
+    const qs = new URLSearchParams(location.search);
+    let code = qs.get('ref') || qs.get('client_reference_id') || '';
+    if (code) {
+      code = code.trim().replace(/^ref-/i, '');
+      if (/^[A-Za-z0-9]{4,20}$/.test(code)) sessionStorage.setItem('th_ref', code);
+    }
+    const saved = sessionStorage.getItem('th_ref');
+    if (!saved) return;
+    document.querySelectorAll('.js-buy-monthly, .js-buy-annual').forEach((a) => {
+      try {
+        const u = new URL(a.href);
+        u.searchParams.set('client_reference_id', 'ref-' + saved.toUpperCase());
+        a.href = u.toString();
+      } catch (_) { /* leave link untouched */ }
+    });
+  })();
+</script>
 
-  <div class="detail-section" id="graduationSection">
-    <div class="detail-label">Earning your trust</div>
-    <div id="graduationBody" class="grad-body"></div>
-  </div>
-
-  <div class="detail-section">
-    <div class="detail-label">Recent runs</div>
-    <div id="recentRuns"></div>
-  </div>
-</aside>
-
-<div id="scrim" class="hidden"></div>
-
-<script src="brand.js?v=221.3"></script>
-<script src="app.js?v=221.3"></script>
 </body>
 </html>

@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KitFire — your AI workforce</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<!-- ?v= cache-buster (S221): bump on every app.css/app.js/brand.js edit —
+     a stale cached stylesheet rendered the org avatars unsized/huge live. -->
+<link rel="stylesheet" href="app.css?v=221.3" />
+</head>
+<body>
+
+<!-- ============ MEMBER GATE (S223) ============
+     The back office is no longer the public homepage. Default state is
+     LOCKED: an opaque overlay covers the app until either (a) a valid
+     access code authenticates against kitfire-platform, or (b) ?demo=1
+     opens the labeled demo tour. Auth persists for the tab session only. -->
+<style>
+  #memberGate {
+    position: fixed; inset: 0; z-index: 1000; background: var(--bg, #0b0f17);
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  #memberGate.hidden { display: none; }
+  .gate-card {
+    width: 100%; max-width: 400px; background: var(--bg-raise, #121826);
+    border: 1px solid var(--line, rgba(255,255,255,0.08)); border-radius: 16px;
+    padding: 38px 34px; text-align: center;
+  }
+  .gate-mark { font-family: "Sora", sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 6px; }
+  .gate-mark .g-tec { color: var(--text, #eef1f6); }
+  .gate-mark .g-hive { color: #f59e0b; }
+  .gate-card h1 { font-size: 16px; font-weight: 600; color: var(--text, #eef1f6); margin: 0 0 4px; }
+  .gate-card .gate-sub { font-size: 13px; color: var(--text-dim, #9aa4b5); margin-bottom: 26px; }
+  .gate-card input {
+    width: 100%; padding: 13px 16px; border-radius: 10px; font-size: 15px;
+    background: var(--bg, #0b0f17); border: 1px solid var(--line-strong, rgba(255,255,255,0.16));
+    color: var(--text, #eef1f6); outline: none; text-align: center; letter-spacing: 1px;
+    font-family: inherit;
+  }
+  .gate-card input:focus { border-color: rgba(245, 158, 11, 0.5); }
+  .gate-btn {
+    width: 100%; margin-top: 12px; padding: 13px 16px; border: none; border-radius: 10px;
+    background: #f59e0b; color: #14100a; font-size: 15px; font-weight: 700; cursor: pointer;
+    font-family: inherit; transition: transform 0.1s, opacity 0.2s;
+  }
+  .gate-btn:hover { transform: translateY(-1px); }
+  .gate-btn:disabled { opacity: 0.55; cursor: wait; transform: none; }
+  .gate-err { min-height: 20px; margin-top: 12px; font-size: 13px; color: #ff6b5e; }
+  .gate-links { margin-top: 22px; font-size: 13px; color: var(--text-faint, #626d80); }
+  .gate-links a { color: var(--text-dim, #9aa4b5); text-decoration: none; }
+  .gate-links a:hover { color: #f59e0b; }
+  .mode-chip {
+    position: fixed; right: 16px; bottom: 16px; z-index: 999;
+    padding: 7px 14px; border-radius: 100px; font-size: 12px; font-weight: 600;
+    background: rgba(245, 158, 11, 0.14); border: 1px solid rgba(245, 158, 11, 0.42);
+    color: #f59e0b; pointer-events: none;
+  }
+</style>
+<div id="memberGate">
+  <div class="gate-card">
+    <div class="gate-mark"><span class="g-tec">Tec</span><span class="g-hive">Hive</span></div>
+    <h1>Member back office</h1>
+    <p class="gate-sub">Enter the access code we emailed you when you joined.</p>
+    <form id="gateForm">
+      <input id="gateCode" type="password" autocomplete="off" spellcheck="false" placeholder="Access code" />
+      <button type="submit" class="gate-btn" id="gateBtn">Open my back office</button>
+      <div class="gate-err" id="gateErr"></div>
+    </form>
+    <div class="gate-links">
+      Not a member yet? <a href="/">See what TecHive is</a><br />
+      Just looking? <a href="/app/?demo=1">Take the demo tour</a>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  var ENDPOINT = 'https://obwjlqrzshdglrccsbtl.supabase.co/functions/v1/kitfire-platform';
+  var gate = document.getElementById('memberGate');
+  var qs = new URLSearchParams(location.search);
+
+  function chip(text) {
+    var el = document.createElement('div');
+    el.className = 'mode-chip';
+    el.textContent = text;
+    document.body.appendChild(el);
+  }
+  function unlock(label) { gate.classList.add('hidden'); if (label) chip(label); }
+
+  if (qs.get('demo') === '1') { unlock('DEMO — sample data'); return; }
+  if (sessionStorage.getItem('th_authed') === '1') {
+    unlock('Preview build — live account data rolling out');
+    return;
+  }
+
+  var form = document.getElementById('gateForm');
+  var input = document.getElementById('gateCode');
+  var btn = document.getElementById('gateBtn');
+  var err = document.getElementById('gateErr');
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var code = input.value.trim();
+    if (!code) { err.textContent = 'Enter your access code.'; return; }
+    btn.disabled = true;
+    err.textContent = '';
+    fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ access_code: code, task: 'get_usage' })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data && data.ok) {
+          sessionStorage.setItem('th_authed', '1');
+          unlock('Preview build — live account data rolling out');
+        } else {
+          err.textContent = "That code didn't unlock. Check the email we sent when you joined.";
+        }
+      })
+      .catch(function () {
+        err.textContent = "Couldn't reach the server. Give it a minute and try again.";
+      })
+      .finally(function () { btn.disabled = false; });
+  });
+})();
+</script>
+
+<!-- ============ LEFT SIDEBAR (platform mode) ============ -->
+<aside id="sidebar">
+  <div class="brand">
+    <span class="brand-kit">Kit</span><span class="brand-fire">Fire</span>
+    <span class="brand-dot" title="Connected"></span>
+  </div>
+
+  <nav class="nav-section">
+    <div class="nav-label">Your agents</div>
+    <div id="agentNav"></div>
+    <button class="nav-item nav-add" data-view="catalog">
+      <span class="nav-ico">+</span> Add an agent
+    </button>
+  </nav>
+
+  <div id="healthStrip">
+    <span id="healthDot" class="health-dot"></span>
+    <span id="healthText">All agents ran on time</span>
+    <button id="pauseAllBtn" class="pause-btn" title="Pause all agents">&#10074;&#10074;</button>
+  </div>
+
+  <nav class="nav-section">
+    <div class="nav-label" id="workspaceLabel">Workspace</div>
+    <div id="workspaceItems">
+    <button class="nav-item" data-view="approvals">
+      <span class="nav-ico">&#10003;</span> Approvals
+      <span id="approvalBadge" class="badge hidden"></span>
+    </button>
+    <button class="nav-item" data-view="activity">
+      <span class="nav-ico">&#8635;</span> Activity
+    </button>
+    <button class="nav-item" data-view="connections">
+      <span class="nav-ico">&#9741;</span> Connections
+    </button>
+    <button class="nav-item" data-view="billing">
+      <span class="nav-ico">&#9635;</span> Billing
+    </button>
+    <button class="nav-item" data-view="refer">
+      <span class="nav-ico">&#9829;</span> Refer &amp; earn
+    </button>
+    </div>
+    <!-- Contextual sub-menu (S221 redesign): while Refer & earn is open
+         on the TecHive skin, the Workspace list swaps to this menu — the
+         sidebar changes with what you're doing instead of stacking cards. -->
+    <div id="referSubNav" class="hidden">
+      <button class="nav-item" data-refertab="overview"><span class="nav-ico">&#9829;</span> Overview</button>
+      <button class="nav-item" data-refertab="organization"><span class="nav-ico">&#9776;</span> Organization</button>
+      <button class="nav-item" data-refertab="markethive"><span class="nav-ico">&#11042;</span> MarketHive</button>
+      <button class="nav-item" id="referBackBtn"><span class="nav-ico">&#8592;</span> Back to workspace</button>
+    </div>
+  </nav>
+
+  <div class="sidebar-foot">
+    <div class="usage-card" id="usageCard" title="Your KitFire usage">
+      <div class="usage-head">
+        <span>Usage</span>
+        <span class="usage-plan" id="usagePlanTag">Starter</span>
+      </div>
+      <div class="usage-row">
+        <div class="usage-labels"><span>Session</span><span id="sessPct">—</span></div>
+        <div class="u-bar"><div class="u-fill" id="sessFill"></div></div>
+        <div class="usage-reset" id="sessReset"></div>
+      </div>
+      <div class="usage-row">
+        <div class="usage-labels"><span>This week</span><span id="weekPct">—</span></div>
+        <div class="u-bar"><div class="u-fill" id="weekFill"></div></div>
+        <div class="usage-reset" id="weekReset"></div>
+      </div>
+    </div>
+    <div class="seat-chip">
+      <div class="seat-avatar" id="seatAvatar">C</div>
+      <div class="seat-meta">
+        <div class="seat-name" id="seatName">Demo seat</div>
+        <div class="seat-plan" id="seatPlan">Starter · 2 agents</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ============ MAIN COLUMN ============ -->
+<main id="main">
+
+  <!-- top bar: agent chips (rail mode) + context header -->
+  <header id="topbar">
+    <button id="menuBtn" class="icon-btn" title="Menu" aria-label="Menu">&#9776;</button>
+    <div id="chipRow"></div>
+    <div class="topbar-right">
+      <button id="fullscreenBtn" class="icon-btn" title="Open full screen" aria-label="Open full screen">&#x26F6;</button>
+      <span id="topbarAvatar" class="topbar-avatar" title=""></span>
+    </div>
+  </header>
+
+  <!-- ===== VIEW: chat ===== -->
+  <section id="view-chat" class="view">
+    <div id="chatHeader">
+      <div>
+        <div id="chatAgentName" class="chat-agent-name"></div>
+        <div id="chatAgentSub" class="chat-agent-sub"></div>
+      </div>
+      <div class="chat-header-actions">
+        <span id="tierChip" class="tier-chip"></span>
+        <button id="customizeBtn" class="btn-ghost">Customize</button>
+      </div>
+    </div>
+    <div id="thread" aria-live="polite"></div>
+    <div id="composerWrap">
+      <div id="composer">
+        <textarea id="composerInput" rows="1" placeholder="Ask KitFire anything…"></textarea>
+        <button id="sendBtn" title="Send" aria-label="Send">&#8593;</button>
+      </div>
+      <div class="composer-hint">KitFire never moves money or shares credentials — at any autonomy level.</div>
+    </div>
+  </section>
+
+  <!-- ===== VIEW: catalog ===== -->
+  <section id="view-catalog" class="view hidden">
+    <div class="view-head">
+      <h1>Add an agent</h1>
+      <p>Your whole AI workforce, in one place. Start with what you have — unlock everyone with Full Workforce. Each agent learns your business from day one.</p>
+    </div>
+
+    <div id="pricingBand">
+      <div class="billing-toggle" role="group" aria-label="Billing period">
+        <button id="billMonthly" class="bill-opt active">Monthly</button>
+        <button id="billAnnual" class="bill-opt">Annual <span class="bill-save">2 months free</span></button>
+      </div>
+      <div class="price-cards">
+        <div class="price-card current">
+          <div class="price-tier">Starter</div>
+          <div class="price-amount"><span id="starterPrice">$99</span><span class="price-per" id="starterPer">/mo</span></div>
+          <div class="price-note">Founding rate</div>
+          <ul class="price-feats">
+            <li>Triage Agent + Ask KitFire</li>
+            <li><b>2 seats included</b> &middot; extra seats $25/mo</li>
+            <li>Approve-first autonomy, ready day one</li>
+            <li>Learns your business from every correction</li>
+          </ul>
+          <div class="price-cta-row"><span class="price-current-tag">&#10003; Your plan</span></div>
+        </div>
+        <div class="price-card featured">
+          <div class="price-flag">Most popular</div>
+          <div class="price-tier">Full Workforce</div>
+          <div class="price-amount"><span id="fullPrice">$299</span><span class="price-per" id="fullPer">/mo</span></div>
+          <div class="price-note">Founding rate · every agent, current and future</div>
+          <ul class="price-feats">
+            <li>Every agent — current and every one we add</li>
+            <li><b>3 seats included</b> &middot; extra seats $25/mo</li>
+            <li>Full trust ladder: graduate any action to auto</li>
+            <li>Priority runs + the full usage allotment</li>
+          </ul>
+          <div class="price-cta-row"><button class="btn-primary" id="upgradeBtn">Upgrade</button></div>
+        </div>
+      </div>
+      <div class="price-foot">Every extra seat adds room in your usage tank — one more person never makes the meter feel tighter. Prices lock at your founding rate for as long as you stay subscribed. KitFire never moves money or holds your credentials — at any tier.</div>
+    </div>
+
+    <div id="catalogGrid"></div>
+  </section>
+
+  <!-- ===== VIEW: approvals ===== -->
+  <section id="view-approvals" class="view hidden">
+    <div class="view-head">
+      <h1>Approvals</h1>
+      <p>Work your agents prepared and are waiting on you to release. Approve, edit, or reject — every decision teaches them.</p>
+    </div>
+    <div id="approvalList"></div>
+  </section>
+
+  <!-- ===== VIEW: activity ===== -->
+  <section id="view-activity" class="view hidden">
+    <div class="view-head">
+      <h1>Activity</h1>
+      <p>Everything your agents have done, on the record.</p>
+    </div>
+    <div id="activityList"></div>
+  </section>
+
+  <!-- ===== VIEW: connections ===== -->
+  <section id="view-connections" class="view hidden">
+    <div class="view-head">
+      <h1>Connections</h1>
+      <p>Your agents can only work with what you connect — and you can disconnect anything, any time. Every connector comes pre-taught: connect QuickBooks and your Invoice Chaser knows what an aging report is on day one.</p>
+    </div>
+    <div class="conn-search-row">
+      <input type="text" id="connSearch" placeholder="Search connectors&hellip;" />
+    </div>
+    <div id="connGrid"></div>
+    <div class="conn-foot">KitFire reads through secure, revocable connections. It never stores your passwords — connecting happens on the provider's own page, and you approve exactly what each agent can see.</div>
+  </section>
+
+  <!-- ===== VIEW: billing ===== -->
+  <section id="view-billing" class="view hidden">
+    <div class="view-head">
+      <h1>Billing</h1>
+      <p>Your plan, your seats, your invoices — and the promises that don't change at any price.</p>
+    </div>
+    <div class="billing-wrap">
+      <div class="bill-card" id="planCard"></div>
+      <div class="bill-card">
+        <div class="bill-card-title">Seats <span id="seatCount" class="bill-hint"></span></div>
+        <div id="seatList"></div>
+        <button class="btn-ghost" id="addSeatBtn">Add a seat &middot; $25/mo</button>
+        <div class="bill-hint role-hint">Only admins can add seats or change billing.</div>
+      </div>
+      <div class="bill-card">
+        <div class="bill-card-title">Invoices</div>
+        <div id="invoiceList"></div>
+        <button class="btn-ghost" id="portalBtn">Manage billing</button>
+        <div class="bill-hint">Update your card, switch to annual, or cancel — handled securely by Stripe.</div>
+      </div>
+      <div class="bill-card trust-card">
+        <div class="bill-card-title">What KitFire will never do</div>
+        <ul class="trust-list">
+          <li>&#128274; Move money or make payments on your behalf</li>
+          <li>&#128274; Store or ask for your passwords</li>
+          <li>&#128274; Cold-call anyone — ever</li>
+          <li>&#128274; Charge you an overage without asking first</li>
+          <li>&#128274; Delete your team's history — even if a seat leaves</li>
+        </ul>
+        <div class="bill-hint">These hold at every plan and every autonomy level. They're not settings.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== VIEW: refer & earn ===== -->
+  <section id="view-refer" class="view hidden">
+    <div class="view-head">
+      <h1>Refer &amp; earn</h1>
+      <p>Know another business that should have a workforce? Send them your link — you earn 15% of everything they spend for their first 12 months.</p>
+    </div>
+    <div id="refer-overview" class="refer-tab">
+    <div class="refer-wrap">
+      <div class="bill-card">
+        <div class="bill-card-title">Your link</div>
+        <div class="refer-link-row">
+          <code id="referLink">kitfire.ai/start?ref=demo-dana</code>
+          <button class="mini-btn fire" id="copyReferBtn">Copy</button>
+        </div>
+        <div class="refer-steps">
+          <div class="refer-step"><b>1.</b> Share your link</div>
+          <div class="refer-step"><b>2.</b> They start their workforce</div>
+          <div class="refer-step"><b>3.</b> You get 15% of what they spend, monthly, for a year</div>
+        </div>
+      </div>
+      <div class="bill-card">
+        <div class="bill-card-title">Your earnings</div>
+        <div class="refer-earnings" id="referEarnings">$0</div>
+        <div class="bill-hint" id="referTally">0 referrals so far &middot; payouts land after their payment clears</div>
+        <div class="refer-example" id="referExample">A referred Full Workforce business = about <b>$45/mo</b> back to you &middot; annual prepay pays you <b>~$448</b> at once.</div>
+      </div>
+    </div>
+    </div>
+
+    <div id="refer-markethive" class="refer-tab hidden techive-only">
+    <div class="refer-wrap">
+      <!-- TecHive skin only (S221): MarketHive signup + the member's own MH
+           referral link. MarketHive's airdrop program credits the E1 member
+           when their referrals join MH through their link — that reward is
+           MarketHive's program, paid by MarketHive in crypto; TecHive only
+           stores and surfaces the link (we never touch the airdrop). -->
+      <div class="bill-card techive-only">
+        <div class="bill-card-title">MarketHive</div>
+        <div class="refer-example">The full MarketHive experience — Super Group, blog group, capture &amp; splash pages — requires MarketHive's <b>Entrepreneur One</b>. <a id="mhSignupLink" href="https://markethive.com" target="_blank" rel="noopener">Sign up at markethive.com &rarr;</a></div>
+        <div class="bill-card-title" style="margin-top:14px">Your MarketHive link</div>
+        <div class="refer-link-row">
+          <input id="mhLinkInput" type="url" placeholder="https://markethive.com/yourname" />
+          <button class="mini-btn fire" id="mhLinkSaveBtn">Save</button>
+        </div>
+        <div class="bill-hint">When people you refer join MarketHive through your link, MarketHive's airdrop program credits you for the referral — that reward comes from MarketHive, on their platform.</div>
+      </div>
+    </div>
+    </div>
+
+    <div id="refer-organization" class="refer-tab hidden techive-only">
+      <!-- Org chart drawn as a TREE (S221 redesign): root = the member,
+           branches three levels down. Production data = referral_overview
+           task (contract in TECHIVE_ONEPAGER.md); demo tree in app.js. -->
+      <div class="bill-card org-card">
+        <div class="bill-card-title">Your organization</div>
+        <div class="bill-hint" style="margin-bottom:10px">Everyone stays on your chart for good — position never rewrites. A member only pauses <i>earning you commissions</i> while their own subscription is inactive. Amounts are yours alone — no member ever sees another member's earnings.</div>
+        <div class="org-toggle">
+          <button class="org-mode active" data-orgmode="chart">Chart</button>
+          <button class="org-mode" data-orgmode="sheet">Sheet</button>
+          <span class="org-legend"><span class="org-legend-seal"></span> MarketHive Entrepreneur One &middot; color = active, gray = position held</span>
+        </div>
+        <div id="orgCanvas"></div>
+        <div id="orgTable" class="hidden"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== VIEW: spawn wizard ===== -->
+  <section id="view-spawn" class="view hidden">
+    <div class="view-head">
+      <h1 id="spawnTitle">Set up your agent</h1>
+      <p>Tell it what you want in your own words. No settings, no setup screens — it builds itself around your business.</p>
+    </div>
+    <div class="spawn-card">
+      <label for="spawnGoal" class="spawn-label">What should this agent handle for you?</label>
+      <textarea id="spawnGoal" rows="4" placeholder="e.g. Watch my inbox. Anything from a customer or about money, tell me by 7am and have a reply ready for me to approve."></textarea>
+      <div class="spawn-actions">
+        <button id="spawnBuildBtn" class="btn-primary">Build my agent</button>
+        <button id="spawnCancelBtn" class="btn-ghost">Cancel</button>
+      </div>
+      <div id="spawnResult" class="hidden">
+        <div class="spawn-plan-head">Here's what I'll do</div>
+        <ul id="spawnPlan"></ul>
+        <div class="spawn-note">Starts in <b>approve-first</b> mode: it prepares everything, you release anything outbound. You can loosen that later — one action at a time, whenever you're ready.</div>
+        <div class="spawn-actions">
+          <button id="spawnConfirmBtn" class="btn-primary">Looks right — turn it on</button>
+          <button id="spawnReviseBtn" class="btn-ghost">Let me reword it</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ============ RIGHT RAIL: agent detail ============ -->
+<aside id="detailRail">
+  <div class="detail-head">
+    <div id="detailAgentName" class="detail-name"></div>
+    <div id="detailAgentDept" class="detail-dept"></div>
+  </div>
+
+  <div class="detail-section">
+    <div class="detail-label">What it does for you</div>
+    <div id="detailMission" class="detail-mission"></div>
+  </div>
+
+  <div class="detail-section">
+    <div class="detail-label">Autonomy — the trust ladder</div>
+    <div id="ladder"></div>
+    <div class="floor-row">
+      <span class="floor-ico">&#128274;</span>
+      <span>Move money, credentials, cold calls — <b>never</b>, at any level.</span>
+    </div>
+  </div>
+
+  <div class="detail-section" id="graduationSection">
+    <div class="detail-label">Earning your trust</div>
+    <div id="graduationBody" class="grad-body"></div>
+  </div>
+
+  <div class="detail-section">
+    <div class="detail-label">Recent runs</div>
+    <div id="recentRuns"></div>
+  </div>
+</aside>
+
+<div id="scrim" class="hidden"></div>
+
+<script src="brand.js?v=221.3"></script>
+<script src="app.js?v=221.3"></script>
+</body>
+</html>
