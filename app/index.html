@@ -77,7 +77,9 @@
 </div>
 <script>
 (function () {
-  var ENDPOINT = 'https://obwjlqrzshdglrccsbtl.supabase.co/functions/v1/kitfire-platform';
+  // S225 separation ruling: TecHive talks to TecHive's OWN function —
+  // kitfire-platform belongs to kitfire.ai and is never reused here.
+  var ENDPOINT = 'https://obwjlqrzshdglrccsbtl.supabase.co/functions/v1/techive-platform';
   var gate = document.getElementById('memberGate');
   var qs = new URLSearchParams(location.search);
 

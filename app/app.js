@@ -12,7 +12,9 @@
 
 const ACCESS_CODE = sessionStorage.getItem('kf_access_code') || '';
 const DEMO_MODE = !ACCESS_CODE;
-const PLATFORM_ENDPOINT = 'https://obwjlqrzshdglrccsbtl.supabase.co/functions/v1/kitfire-platform';
+// S225 separation ruling (Chris): TecHive and KitFire are separate
+// companies — this app talks to techive-platform, TecHive's own fn.
+const PLATFORM_ENDPOINT = 'https://obwjlqrzshdglrccsbtl.supabase.co/functions/v1/techive-platform';
 
 // ---------- markdown (ported verbatim policy from sidepanel.js: escape FIRST) ----------
 
