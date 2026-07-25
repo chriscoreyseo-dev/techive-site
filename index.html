@@ -87,8 +87,17 @@
   .btn-login:hover { background: var(--hive-soft); }
   @media (max-width: 720px) { .nav-links a:not(.btn-login) { display: none; } }
 
-  /* ============ HERO ============ */
-  .hero { padding: 120px 0 104px; text-align: center; position: relative; }
+  /* ============ HERO (left-rail layout, S224 exploration) ============ */
+  .hero { padding: 120px 0 104px; text-align: left; position: relative; }
+  .hero-content { max-width: 560px; margin-left: calc(50% - 50vw + 48px); }
+  .hero-content h1 { margin: 0 0 22px; }
+  .hero-content .hero-sub { margin: 0 0 38px; }
+  .hero-content .hero-ctas { justify-content: flex-start; }
+  @media (max-width: 860px) {
+    .hero { text-align: center; }
+    .hero-content { max-width: none; margin-left: 0; }
+    .hero-content .hero-ctas { justify-content: center; }
+  }
   .hero-media {
     position: absolute; top: 0; bottom: 0; left: 50%; transform: translateX(-50%);
     width: 100vw; z-index: 0; pointer-events: none; overflow: hidden;
@@ -96,7 +105,10 @@
   .hero-media video { width: 100%; height: 100%; object-fit: cover; }
   .hero-media::after {
     content: ""; position: absolute; inset: 0;
-    background: radial-gradient(ellipse at 50% 42%, rgba(11,15,23,0.5) 0%, rgba(11,15,23,0.92) 82%);
+    background: linear-gradient(90deg, rgba(11,15,23,0.94) 0%, rgba(11,15,23,0.78) 38%, rgba(11,15,23,0.35) 62%, rgba(11,15,23,0.12) 100%);
+  }
+  @media (max-width: 860px) {
+    .hero-media::after { background: radial-gradient(ellipse at 50% 42%, rgba(11,15,23,0.5) 0%, rgba(11,15,23,0.92) 82%); }
   }
   .hero > *:not(.hero-media) { position: relative; z-index: 1; }
   .hero-kicker {
@@ -350,14 +362,15 @@
         <source src="assets/ignition-strip.mp4" type="video/mp4" />
       </video>
     </div>
-    <div class="hero-kicker">⬢ &nbsp;The AI workforce for network marketers &amp; affiliates</div>
-    <h1>Your business doesn't need another tool.<br />It needs a <span class="amber">workforce</span>.</h1>
-    <p class="hero-sub">You approve from your phone. They do the rest.</p>
-    <div class="hero-ctas">
-      <a class="btn-primary js-buy-monthly" href="https://buy.stripe.com/eVq7sMaGH9C4cSRgo03Ru07">Get your workforce — $299/mo</a>
-      <a class="btn-ghost" href="/app/?demo=1">See the back office</a>
+    <div class="hero-content">
+      <div class="hero-kicker">⬢ &nbsp;The AI workforce for network marketers &amp; affiliates</div>
+      <h1>Your business doesn't need another tool.<br />It needs a <span class="amber">workforce</span>.</h1>
+      <p class="hero-sub">You approve from your phone. They do the rest.</p>
+      <div class="hero-ctas">
+        <a class="btn-ghost" href="/app/?demo=1">See the back office</a>
+      </div>
+      <p class="hero-note">Working in minutes. Knows your business by day two. No contracts — cancel anytime.</p>
     </div>
-    <p class="hero-note">Working in minutes. Knows your business by day two. No contracts — cancel anytime.</p>
   </header>
 
   <!-- ============ OUTPUT TICKER ============ -->
