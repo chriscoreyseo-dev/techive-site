@@ -3,13 +3,15 @@
 // truth live behind the kitfire-platform edge fn. This file is UI state + the
 // callPlatform() contract only.
 //
-// DEMO_MODE: true until kitfire-platform (FLEET-0050/0051) is deployed. All
-// api.* calls resolve against the mock below with fake latency so the whole
-// flow — chat, catalog locks, spawn wizard, approvals, trust ladder,
-// graduation — is clickable end-to-end. Flipping DEMO_MODE routes the same
-// calls to the real endpoint; no view code changes.
+// DEMO_MODE (S225 — LIVE wiring): demo only when there is no access code to
+// authenticate with — i.e. the ?demo=1 tour, where the gate never stores
+// one. A member who unlocked the gate has their code in sessionStorage
+// (tab-session only, never persisted) and every view loads server truth
+// from kitfire-platform. The demo dataset below stays as the tour's data
+// AND the shape documentation for what the server returns.
 
-const DEMO_MODE = true;
+const ACCESS_CODE = sessionStorage.getItem('kf_access_code') || '';
+const DEMO_MODE = !ACCESS_CODE;
 const PLATFORM_ENDPOINT = 'https://obwjlqrzshdglrccsbtl.supabase.co/functions/v1/kitfire-platform';
 
 // ---------- markdown (ported verbatim policy from sidepanel.js: escape FIRST) ----------
@@ -380,7 +382,7 @@ const api = {
 
 async function callPlatform(task, payload) {
   // Real transport — same seat-auth envelope as kitfire-worker (SPEC_V1 pattern).
-  const access_code = localStorage.getItem('kf_access_code') || '';
+  const access_code = ACCESS_CODE;
   try {
     const res = await fetch(PLATFORM_ENDPOINT, {
       method: 'POST',
@@ -392,6 +394,48 @@ async function callPlatform(task, payload) {
     console.error('KitFire Platform: request failed', task, e);
     return { ok: false, error: "Couldn't reach KitFire. Check your connection and try again." };
   }
+}
+
+// ---------- live boot (S225) ----------
+// One pass over the read tasks; each ok result overwrites the matching
+// demo.* slice, so every render function below works unchanged on live
+// data. Any single failed slice degrades gracefully — never a blank app.
+
+const PLAN_RATES = {
+  'TecHive': '$299/mo founding rate',
+  'Starter': '$99/mo founding rate',
+  'Full Workforce': '$299/mo founding rate',
+};
+
+async function loadLiveState() {
+  const [inst, cat, appr, act, usage, refer] = await Promise.all([
+    callPlatform('list_instances', {}),
+    callPlatform('list_catalog', {}),
+    callPlatform('list_approvals', {}),
+    callPlatform('list_activity', {}),
+    callPlatform('get_usage', {}),
+    callPlatform('referral_overview', {}),
+  ]);
+  if (inst && inst.ok) demo.instances = inst.instances;
+  if (cat && cat.ok && cat.catalog && cat.catalog.length) demo.catalog = cat.catalog;
+  if (appr && appr.ok) demo.approvals = appr.approvals;
+  if (act && act.ok) demo.activity = act.activity;
+  if (usage && usage.ok) {
+    demo.usage = usage.usage;
+    const seatName = (usage.seat && usage.seat.name) || 'Member';
+    demo.seat = {
+      display_name: seatName,
+      plan: usage.plan + ' · ' + (PLAN_RATES[usage.plan] || 'founding rate'),
+      role: (usage.seat && usage.seat.role) || 'member',
+    };
+    demo.teamSeats = [{ name: seatName, role: demo.seat.role }];
+  }
+  demo.invoices = []; // live invoices are in the Stripe portal ("Manage billing")
+  if (refer && refer.ok && refer.referral) {
+    demo.referral = refer.referral;
+  }
+  demo.chat = {}; // threads hydrate per-instance via chat_history
+  currentInstance = demo.instances[0] || null;
 }
 
 // ---------- state ----------
@@ -475,6 +519,17 @@ function selectInstance(id) {
   showView('chat');
   renderChat();
   renderDetail();
+  // Live: hydrate this instance's thread once per tab-session so the
+  // conversation survives reloads (server keeps it in instance_events).
+  if (!DEMO_MODE && currentInstance && !demo.chat[currentInstance.id]) {
+    const instId = currentInstance.id;
+    callPlatform('chat_history', { instance_id: instId }).then((res) => {
+      if (res && res.ok) {
+        demo.chat[instId] = res.messages;
+        if (currentInstance && currentInstance.id === instId && currentView === 'chat') renderChat();
+      }
+    });
+  }
 }
 
 document.querySelectorAll('.nav-item[data-view]').forEach((b) => {
@@ -538,6 +593,7 @@ function greetingLine() {
 }
 
 function renderChat() {
+  if (!currentInstance) return; // live account, no agents spawned yet
   $('chatAgentName').textContent = currentInstance.name;
   $('chatAgentSub').textContent = currentInstance.mission;
   $('tierChip').textContent = tierLabel(currentInstance);
@@ -562,6 +618,7 @@ function tierLabel(inst) {
 }
 
 async function sendMessage() {
+  if (!currentInstance) return;
   const input = $('composerInput');
   const text = input.value.trim();
   if (!text) return;
@@ -660,7 +717,23 @@ $('spawnBuildBtn').addEventListener('click', async () => {
   $('spawnResult').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 });
 
-$('spawnConfirmBtn').addEventListener('click', () => {
+$('spawnConfirmBtn').addEventListener('click', async () => {
+  if (!DEMO_MODE) {
+    // Live: spawn_agent already created the instance server-side at "Build
+    // my agent" (the compiler ran before anything was stored). Confirm =
+    // re-list and open the newest instance of this agent.
+    const res = await callPlatform('list_instances', {});
+    if (res && res.ok) {
+      demo.instances = res.instances;
+      const mine = demo.instances.filter((i) => i.catalog_id === spawnTarget.id);
+      const inst = mine[mine.length - 1];
+      renderNav();
+      renderChips();
+      if (inst) selectInstance(inst.id);
+      else showView('catalog');
+    }
+    return;
+  }
   const inst = {
     id: 'inst-' + spawnTarget.id,
     catalog_id: spawnTarget.id,
@@ -747,6 +820,24 @@ async function resolveApproval(id, verdict) {
   renderApprovals();
   renderNav();
   renderDetail();
+  // Live: the server's activity feed and streak math are the truth —
+  // resync in the background after the local optimistic update.
+  if (!DEMO_MODE) {
+    callPlatform('list_activity', {}).then((r) => {
+      if (r && r.ok) {
+        demo.activity = r.activity;
+        if (currentView === 'activity') renderActivity();
+      }
+    });
+    callPlatform('list_instances', {}).then((r) => {
+      if (r && r.ok && r.instances.length) {
+        const keepId = currentInstance && currentInstance.id;
+        demo.instances = r.instances;
+        currentInstance = demo.instances.find((i) => i.id === keepId) || demo.instances[0];
+        renderDetail();
+      }
+    });
+  }
 }
 
 function maybeOfferGraduation(inst) {
@@ -774,6 +865,7 @@ function renderActivity() {
 
 function renderDetail() {
   const inst = currentInstance;
+  if (!inst) return; // live account, no agents spawned yet
   $('detailAgentName').textContent = inst.name;
   $('detailAgentDept').textContent = inst.dept;
   $('detailMission').textContent = inst.mission;
@@ -978,7 +1070,7 @@ function renderBilling() {
     <div class="bill-card-title">Your plan</div>
     <div class="plan-line"><span>Plan</span><b>${escapeHtml(planName)}</b></div>
     <div class="plan-line"><span>Rate</span><b>${escapeHtml(demo.seat.plan.split(' · ')[1] || '')}</b></div>
-    <div class="plan-line"><span>Renews</span><b>Aug 1, 2026</b></div>
+    <div class="plan-line"><span>Renews</span><b>${DEMO_MODE ? 'Aug 1, 2026' : 'Monthly · managed in Stripe'}</b></div>
     <div class="plan-line"><span>Usage this week</span><b>${demo.usage.week.pct}% of tank</b></div>
     <button class="btn-primary" id="billingUpgradeBtn" style="margin-top:10px">See Full Workforce</button>`;
   $('billingUpgradeBtn').addEventListener('click', () => showView('catalog'));
@@ -998,6 +1090,9 @@ function renderBilling() {
 
   const inv = $('invoiceList');
   inv.innerHTML = '';
+  if (demo.invoices.length === 0) {
+    inv.innerHTML = '<div class="bill-hint">Your invoices are in the Stripe portal — open "Manage billing" below.</div>';
+  }
   for (const i of demo.invoices) {
     const row = document.createElement('div');
     row.className = 'inv-row';
@@ -1030,7 +1125,11 @@ function renderRefer() {
   // airdrop program credits the right member. TecHive never touches the
   // airdrop itself — it's MarketHive's program on MarketHive's platform.
   const mhInput = $('mhLinkInput');
-  if (mhInput) mhInput.value = localStorage.getItem('techive_mh_link') || '';
+  if (mhInput) {
+    mhInput.value = DEMO_MODE
+      ? (localStorage.getItem('techive_mh_link') || '')
+      : (demo.referral.markethive_link || '');
+  }
 }
 
 // S221 redesign: refer & earn sub-views (contextual sidebar picks the
@@ -1189,11 +1288,24 @@ function renderOrgTable() {
   el.innerHTML = rows.join('');
 }
 
-$('mhLinkSaveBtn') && $('mhLinkSaveBtn').addEventListener('click', () => {
+$('mhLinkSaveBtn') && $('mhLinkSaveBtn').addEventListener('click', async () => {
+  const btn = $('mhLinkSaveBtn');
   const v = ($('mhLinkInput').value || '').trim();
-  localStorage.setItem('techive_mh_link', v);
-  $('mhLinkSaveBtn').textContent = 'Saved';
-  setTimeout(() => { $('mhLinkSaveBtn').textContent = 'Save'; }, 1200);
+  if (DEMO_MODE) {
+    localStorage.setItem('techive_mh_link', v);
+    btn.textContent = 'Saved';
+    setTimeout(() => { btn.textContent = 'Save'; }, 1200);
+    return;
+  }
+  btn.textContent = 'Saving…';
+  const res = await callPlatform('save_mh_link', { mh_link: v });
+  if (res && res.ok) {
+    demo.referral.markethive_link = v;
+    btn.textContent = 'Saved';
+  } else {
+    btn.textContent = (res && res.error) ? res.error : 'Try again';
+  }
+  setTimeout(() => { btn.textContent = 'Save'; }, 2600);
 });
 
 $('copyReferBtn').addEventListener('click', async () => {
@@ -1229,30 +1341,41 @@ $('pauseAllBtn').addEventListener('click', () => {
 
 // ---------- init ----------
 
-$('seatName').textContent = demo.seat.display_name;
-$('seatPlan').textContent = demo.seat.plan;
-$('seatAvatar').textContent = demo.seat.display_name.charAt(0);
-$('topbarAvatar').textContent = demo.seat.display_name.charAt(0);
-$('topbarAvatar').title = demo.seat.display_name;
-renderNav();
-renderChips();
-renderChat();
-renderDetail();
-renderUsage();
-renderPricing();
-renderHealth();
+async function boot() {
+  if (!DEMO_MODE) await loadLiveState();
 
-// Deep link (S221): ?view=refer&tab=organization opens straight to a
-// workspace view — used by tests/screenshots and shareable links alike.
-{
-  const boot = new URLSearchParams(location.search);
-  const bootView = boot.get('view');
+  $('seatName').textContent = demo.seat.display_name;
+  $('seatPlan').textContent = demo.seat.plan;
+  $('seatAvatar').textContent = demo.seat.display_name.charAt(0);
+  $('topbarAvatar').textContent = demo.seat.display_name.charAt(0);
+  $('topbarAvatar').title = demo.seat.display_name;
+  renderNav();
+  renderChips();
+  if (currentInstance) {
+    selectInstance(currentInstance.id); // also hydrates the live thread
+  } else {
+    renderChat();
+    renderDetail();
+  }
+  renderUsage();
+  renderPricing();
+  renderHealth();
+
+  // Deep link (S221): ?view=refer&tab=organization opens straight to a
+  // workspace view — used by tests/screenshots and shareable links alike.
+  const params = new URLSearchParams(location.search);
+  const bootView = params.get('view');
   if (bootView && $('view-' + bootView)) {
     showView(bootView);
-    const bootTab = boot.get('tab');
+    const bootTab = params.get('tab');
     if (bootView === 'refer' && bootTab && ['overview', 'organization', 'markethive'].includes(bootTab)) {
       referTab = bootTab;
       renderReferTabs();
     }
+  } else if (!DEMO_MODE && demo.instances.length === 0) {
+    // A live member with no agents spawned yet lands on the catalog —
+    // the first thing to do is set one up.
+    showView('catalog');
   }
 }
+boot();

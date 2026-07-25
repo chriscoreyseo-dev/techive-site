@@ -90,8 +90,12 @@
   function unlock(label) { gate.classList.add('hidden'); if (label) chip(label); }
 
   if (qs.get('demo') === '1') { unlock('DEMO — sample data'); return; }
-  if (sessionStorage.getItem('th_authed') === '1') {
-    unlock('Preview build — live account data rolling out');
+  // S225: a valid code is now KEPT (tab-session only) — app.js sends it on
+  // every kitfire-platform call, which is what makes the views live. The
+  // old th_authed boolean is gone: without the code there's nothing to
+  // authenticate calls with, so its holder re-enters the code once.
+  if (sessionStorage.getItem('kf_access_code')) {
+    unlock('LIVE — your account');
     return;
   }
 
@@ -114,8 +118,10 @@
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (data && data.ok) {
-          sessionStorage.setItem('th_authed', '1');
-          unlock('Preview build — live account data rolling out');
+          sessionStorage.setItem('kf_access_code', code);
+          // app.js already booted in demo mode before the gate cleared —
+          // reload so it boots again with the code present and loads live.
+          location.reload();
         } else {
           err.textContent = "That code didn't unlock. Check the email we sent when you joined.";
         }
@@ -479,7 +485,7 @@
 
 <div id="scrim" class="hidden"></div>
 
-<script src="brand.js?v=221.3"></script>
-<script src="app.js?v=221.3"></script>
+<script src="brand.js?v=225.1"></script>
+<script src="app.js?v=225.1"></script>
 </body>
 </html>
