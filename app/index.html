@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <!-- ?v= cache-buster (S221): bump on every app.css/app.js/brand.js edit —
      a stale cached stylesheet rendered the org avatars unsized/huge live. -->
-<link rel="stylesheet" href="app.css?v=225.4" />
+<link rel="stylesheet" href="app.css?v=225.5" />
 </head>
 <body>
 
@@ -168,7 +168,7 @@
       <span class="nav-ico">&#8635;</span> Activity
     </button>
     <button class="nav-item" data-view="connections">
-      <span class="nav-ico">&#9741;</span> Connections
+      <span class="nav-ico">&#9741;</span> Connectors
     </button>
     <button class="nav-item" data-view="billing">
       <span class="nav-ico">&#9635;</span> Billing
@@ -318,14 +318,17 @@
   <!-- ===== VIEW: connections ===== -->
   <section id="view-connections" class="view hidden">
     <div class="view-head">
-      <h1>Connections</h1>
+      <!-- "Connectors", not "Connections" (Chris ruling S225): connections
+           reads as PEOPLE you're connected to — social-network language.
+           These are the things you plug your agents into. -->
+      <h1>Connectors</h1>
       <p>Your agents can only work with what you connect — and you can disconnect anything, any time. Every connector comes pre-taught: connect QuickBooks and your Invoice Chaser knows what an aging report is on day one.</p>
     </div>
     <div class="conn-search-row">
       <input type="text" id="connSearch" placeholder="Search connectors&hellip;" />
     </div>
     <div id="connGrid"></div>
-    <div class="conn-foot">KitFire reads through secure, revocable connections. It never stores your passwords — connecting happens on the provider's own page, and you approve exactly what each agent can see.</div>
+    <div class="conn-foot">KitFire reads through secure, revocable connectors. It never stores your passwords — connecting happens on the provider's own page, and you approve exactly what each agent can see.</div>
   </section>
 
   <!-- ===== VIEW: billing ===== -->
@@ -509,7 +512,7 @@
 
 <div id="scrim" class="hidden"></div>
 
-<script src="brand.js?v=225.3"></script>
-<script src="app.js?v=225.3"></script>
+<script src="brand.js?v=225.5"></script>
+<script src="app.js?v=225.5"></script>
 </body>
 </html>

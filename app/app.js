@@ -57,7 +57,7 @@ const demo = {
   connections: [
     { id: 'gmail', cat: 'Inbox & comms', ico: '&#9993;', name: 'Gmail', desc: 'Your triage agent reads and sorts it around the clock.', state: 'available' },
     { id: 'markethive', cat: 'Inbox & comms', img: 'assets/markethive-icon.png', name: 'MarketHive', desc: 'Official connector in the works — group blogs, feed, capture pages, and your leads.', state: 'soon' },
-    { id: 'outlook', cat: 'Inbox & comms', ico: '&#9993;', name: 'Outlook', desc: 'Inbox + calendar in one connection.', state: 'available' },
+    { id: 'outlook', cat: 'Inbox & comms', ico: '&#9993;', name: 'Outlook', desc: 'Inbox + calendar in one connector.', state: 'available' },
     { id: 'slack', cat: 'Inbox & comms', ico: '&#128172;', name: 'Slack', desc: 'Team chatter becomes team memory — decisions get caught, not lost.', state: 'available' },
     { id: 'phone', cat: 'Inbox & comms', ico: '&#9742;', name: 'Business phone', desc: 'Voicemail transcripts and missed-call follow-ups flow into triage.', state: 'available' },
     { id: 'quickbooks', cat: 'Money', ico: '&#128202;', name: 'QuickBooks', desc: 'Your Invoice Chaser knows what an aging report is on day one.', state: 'available' },
