@@ -433,6 +433,13 @@ async function loadLiveState() {
     demo.teamSeats = [{ name: seatName, role: demo.seat.role }];
   }
   demo.invoices = []; // live invoices are in the Stripe portal ("Manage billing")
+  // Connectors honesty rule (S225, Chris catch): the OAuth rail isn't
+  // deployed yet, so on a LIVE account nothing may render "Connected" —
+  // everything shows available (MarketHive: in the works) until
+  // account-rails ships real provider OAuth.
+  demo.connections = demo.connections.map((c) =>
+    c.state === 'connected' ? { ...c, state: c.id === 'markethive' ? 'soon' : 'available' } : c
+  );
   if (refer && refer.ok && refer.referral) {
     demo.referral = refer.referral;
   }
@@ -1045,8 +1052,15 @@ function renderConnections() {
   grid.appendChild(req);
 
   grid.querySelectorAll('[data-conn]').forEach((b) => b.addEventListener('click', () => {
-    // Real flow: provider OAuth on their page -> revocable token server-side
-    // (FLEET-0054 lane). Demo flips the state.
+    // Real flow: provider OAuth on the provider's own page -> revocable
+    // token server-side (FLEET-0054 account-rails lane, not yet live).
+    // LIVE accounts never fake it (S225 honesty rule — Chris caught the
+    // demo stub flipping "Connected" with nothing behind it).
+    if (!DEMO_MODE) {
+      b.textContent = "Coming online soon — we'll email you";
+      b.disabled = true;
+      return;
+    }
     const c = demo.connections.find((x) => x.id === b.dataset.conn);
     c.state = c.state === 'connected' ? 'available' : 'connected';
     renderConnections();
