@@ -1054,21 +1054,30 @@ function connButtonHtml(c) {
 
 const CONN_CAT_ORDER = ['Inbox & comms', 'Money', 'Customers & reviews', 'Schedule', 'Store & site', 'Docs & files', 'Networks'];
 
+// S225 Chris ruling: the shelf leads with what's REAL — your connected
+// hookups first, then what's one click from connecting, then the roadmap.
+const CONN_STATE_RANK = { connected: 0, available: 1, soon: 2 };
+const CONN_BAND_LABELS = ['Connected', 'Ready to connect', 'In the works'];
+
 function renderConnections() {
   const grid = $('connGrid');
   const q = ($('connSearch').value || '').trim().toLowerCase();
+  const rank = (c) => (CONN_STATE_RANK[c.state] !== undefined ? CONN_STATE_RANK[c.state] : 2);
   const list = demo.connections
     .filter((c) =>
       !q || c.name.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q) || c.cat.toLowerCase().includes(q))
-    .sort((a, b) => CONN_CAT_ORDER.indexOf(a.cat) - CONN_CAT_ORDER.indexOf(b.cat));
+    .sort((a, b) =>
+      (rank(a) - rank(b)) ||
+      (CONN_CAT_ORDER.indexOf(a.cat) - CONN_CAT_ORDER.indexOf(b.cat)));
   grid.innerHTML = '';
-  let lastCat = null;
+  let lastBand = null;
   for (const c of list) {
-    if (c.cat !== lastCat) {
-      lastCat = c.cat;
+    const band = CONN_BAND_LABELS[rank(c)];
+    if (band !== lastBand) {
+      lastBand = band;
       const label = document.createElement('div');
       label.className = 'conn-cat-label';
-      label.textContent = c.cat;
+      label.textContent = band;
       grid.appendChild(label);
     }
     const card = document.createElement('div');
