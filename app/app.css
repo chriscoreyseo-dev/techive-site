@@ -339,6 +339,28 @@ body {
 }
 #sendBtn:hover { filter: brightness(1.08); }
 #sendBtn:active { transform: scale(0.92); }
+/* Voice input (S225): one mic on the shared composer serves every agent;
+   a second one rides the spawn wizard. Ember pulse = listening. */
+.mic-btn {
+  width: 34px; height: 34px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: none; color: var(--text-dim);
+  border: 1px solid var(--line-strong);
+  cursor: pointer; flex-shrink: 0;
+  transition: color 0.15s, border-color 0.15s, background 0.15s, transform 0.1s;
+}
+.mic-btn:hover { color: var(--ember); border-color: var(--ember-line); }
+.mic-btn:active { transform: scale(0.92); }
+.mic-btn.listening {
+  color: #fff; background: var(--ember); border-color: var(--ember);
+  animation: micPulse 1.6s ease-out infinite;
+}
+@keyframes micPulse {
+  0% { box-shadow: 0 0 0 0 var(--ember-soft); }
+  70% { box-shadow: 0 0 0 12px rgba(0, 0, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); }
+}
+.spawn-actions .mic-btn { margin-right: auto; }
 .composer-hint {
   font-size: 11px; color: var(--text-faint);
   text-align: center; margin-top: 8px;

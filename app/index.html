@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <!-- ?v= cache-buster (S221): bump on every app.css/app.js/brand.js edit —
      a stale cached stylesheet rendered the org avatars unsized/huge live. -->
-<link rel="stylesheet" href="app.css?v=221.3" />
+<link rel="stylesheet" href="app.css?v=225.2" />
 </head>
 <body>
 
@@ -244,6 +244,7 @@
     <div id="composerWrap">
       <div id="composer">
         <textarea id="composerInput" rows="1" placeholder="Ask KitFire anything…"></textarea>
+        <button id="micBtn" class="mic-btn" title="Speak instead of typing" aria-label="Speak instead of typing"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg></button>
         <button id="sendBtn" title="Send" aria-label="Send">&#8593;</button>
       </div>
       <div class="composer-hint">KitFire never moves money or shares credentials — at any autonomy level.</div>
@@ -437,6 +438,7 @@
       <label for="spawnGoal" class="spawn-label">What should this agent handle for you?</label>
       <textarea id="spawnGoal" rows="4" placeholder="e.g. Watch my inbox. Anything from a customer or about money, tell me by 7am and have a reply ready for me to approve."></textarea>
       <div class="spawn-actions">
+        <button id="spawnMicBtn" class="mic-btn" title="Speak instead of typing" aria-label="Speak instead of typing"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg></button>
         <button id="spawnBuildBtn" class="btn-primary">Build my agent</button>
         <button id="spawnCancelBtn" class="btn-ghost">Cancel</button>
       </div>
@@ -487,7 +489,7 @@
 
 <div id="scrim" class="hidden"></div>
 
-<script src="brand.js?v=225.1"></script>
-<script src="app.js?v=225.1"></script>
+<script src="brand.js?v=225.2"></script>
+<script src="app.js?v=225.2"></script>
 </body>
 </html>

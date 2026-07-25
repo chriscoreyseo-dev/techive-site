@@ -1318,6 +1318,71 @@ $('copyReferBtn').addEventListener('click', async () => {
   } catch (e) { console.error('copy failed', e); }
 });
 
+// ---------- voice input (S225 — Chris directive: click and speak, every agent) ----------
+// Browser-native Web Speech API. Click the mic, talk, and the words stream
+// into the box (interim results live, like dictation); click again or go
+// quiet to stop, then review and hit send. Recognition runs entirely in
+// the member's browser — no audio ever reaches TecHive servers. Supported
+// in Chrome/Edge/Safari; the button hides itself where the API is absent
+// (e.g. Firefox), so nothing breaks. The chat composer is SHARED by every
+// agent, so one mic there covers the whole roster; the spawn wizard gets
+// its own so members can speak their agent's mission.
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+function attachMic(btnId, inputId) {
+  const btn = $(btnId);
+  const input = $(inputId);
+  if (!btn || !input) return;
+  if (!SpeechRec) { btn.style.display = 'none'; return; }
+  let rec = null;
+  let baseText = '';
+
+  btn.addEventListener('click', () => {
+    if (rec) { rec.stop(); return; } // second click = stop listening
+    rec = new SpeechRec();
+    rec.lang = navigator.language || 'en-US';
+    rec.interimResults = true;
+    rec.continuous = true;
+    baseText = input.value ? input.value.replace(/\s+$/, '') + ' ' : '';
+    btn.classList.add('listening');
+    btn.title = 'Stop listening';
+
+    rec.onresult = (e) => {
+      let finals = '';
+      let interim = '';
+      for (let i = 0; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) finals += t + ' ';
+        else interim += t;
+      }
+      input.value = baseText + finals + interim;
+      // Fire the composer's autosize handler so the box grows with speech.
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    rec.onerror = (e) => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        btn.title = 'Microphone blocked — allow mic access for this site in your browser settings';
+      }
+    };
+    rec.onend = () => {
+      rec = null;
+      btn.classList.remove('listening');
+      btn.title = 'Speak instead of typing';
+      input.focus();
+    };
+    try {
+      rec.start();
+    } catch (err) {
+      console.error('voice input failed to start', err);
+      rec = null;
+      btn.classList.remove('listening');
+    }
+  });
+}
+
+attachMic('micBtn', 'composerInput');
+attachMic('spawnMicBtn', 'spawnGoal');
+
 // ---------- pause all / health strip ----------
 
 function renderHealth() {
