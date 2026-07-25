@@ -185,9 +185,11 @@
     margin: 6px calc(50% - 50vw) 0; overflow: hidden;
     border-top: 1px solid var(--hive-line); border-bottom: 1px solid var(--hive-line);
     background: var(--bg); line-height: 0;
+    display: flex; justify-content: center;
   }
   .ignition-band video {
-    width: 100%; max-height: 320px; object-fit: cover; display: block;
+    display: block; width: min(100%, calc(80vh * 16 / 9));
+    max-height: 80vh; object-fit: contain;
   }
 
   /* ============ OUTPUT TICKER ============ */
