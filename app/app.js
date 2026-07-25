@@ -406,6 +406,20 @@ const api = {
   async requestConnector(text) {
     return callPlatform('request_connector', { content: text });
   },
+  // ---- Triage morning sweep (S225/FLEET-0057) ----
+  async runTriage(instanceId) {
+    if (DEMO_MODE) {
+      await wait(1400);
+      return {
+        ok: true,
+        output: 'Morning sweep done (demo) — 27 messages scanned. 2 prospect replies and 1 company notice are on top, ' +
+          '3 messages from your bank are reserved for you (never opened), and everything else is quiet noise. ' +
+          '2 replies are drafted and waiting in **Approvals**.\n\n---\nOn a live account, this reads your connected Gmail through the connector rail — nothing here is real yet.',
+        drafts_queued: 2,
+      };
+    }
+    return callPlatform('run_triage', { instance_id: instanceId });
+  },
 };
 
 async function callPlatform(task, payload) {
@@ -642,11 +656,21 @@ function greetingLine() {
   return { head: `${part}, ${first}.`, sub: `${work} · ${health}.` };
 }
 
+// S225/FLEET-0057: the sweep affordance only makes sense for the Triage
+// Agent (catalog_id 'inbox_triage' — real server value in live mode, and
+// the same id in the TecHive demo dataset, so this check works unchanged
+// in both modes).
+function isTriageInstance(inst) {
+  return Boolean(inst) && inst.catalog_id === 'inbox_triage';
+}
+
 function renderChat() {
   if (!currentInstance) return; // live account, no agents spawned yet
   $('chatAgentName').textContent = currentInstance.name;
   $('chatAgentSub').textContent = currentInstance.mission;
   $('tierChip').textContent = tierLabel(currentInstance);
+  const sweepBtn = $('sweepBtn');
+  if (sweepBtn) sweepBtn.classList.toggle('hidden', !isTriageInstance(currentInstance));
   $('thread').innerHTML = '';
   // Canvas greeting (Chris ruling S219: personalize the work, not the chrome —
   // the name lives in the first thing the agent says, not next to the brand).
@@ -696,6 +720,58 @@ $('customizeBtn').addEventListener('click', () => {
   $('composerInput').value = 'I want to change how you handle ';
   $('composerInput').focus();
 });
+
+// ---------- morning sweep (S225/FLEET-0057) ----------
+// "Run my morning sweep" reads like a chat turn (same appendMsg/typing
+// pattern as sendMessage) but calls run_triage instead of chat, then
+// resyncs approvals/activity/recent-runs since a sweep can queue drafts
+// and write a run record server-side. Degrades gracefully: until
+// techive-platform is redeployed with run_triage, the server's isTask()
+// gate rejects it as an unknown task — shown here as a calm "isn't live
+// yet" note, never a raw error or a splash (S225 honesty rule, same
+// posture as the connector rail's pre-deploy fallback).
+async function runTriageSweep() {
+  if (!currentInstance) return;
+  const btn = $('sweepBtn');
+  if (btn) btn.disabled = true;
+  appendMsg('user', 'Run my morning sweep');
+  (demo.chat[currentInstance.id] = demo.chat[currentInstance.id] || []).push({ role: 'user', text: 'Run my morning sweep' });
+
+  const typing = appendMsg('agent', '<div class="typing"><span></span><span></span><span></span></div>');
+  const res = await api.runTriage(currentInstance.id);
+  let displayText;
+  if (res && res.ok) {
+    displayText = res.output;
+  } else if (res && typeof res.error === 'string' && /unknown task/i.test(res.error)) {
+    displayText = "**Morning sweep isn't live yet** — check back soon.";
+  } else {
+    displayText = '**Hmm.** ' + ((res && res.error) || 'Something went wrong — try again.');
+  }
+  typing.querySelector('.msg-body').innerHTML = mdToHtml(displayText);
+  demo.chat[currentInstance.id].push({ role: 'agent', text: displayText });
+  $('thread').scrollTop = $('thread').scrollHeight;
+  if (btn) btn.disabled = false;
+
+  if (res && res.ok && !DEMO_MODE) {
+    // Server truth resync — a sweep can queue approvals, write activity,
+    // and add a loop_runs row for "Recent runs" (same pattern as
+    // resolveApproval's post-action resync below).
+    const [apprRes, actRes, instRes] = await Promise.all([
+      callPlatform('list_approvals', {}),
+      callPlatform('list_activity', {}),
+      callPlatform('list_instances', {}),
+    ]);
+    if (apprRes && apprRes.ok) { demo.approvals = apprRes.approvals; renderNav(); if (currentView === 'approvals') renderApprovals(); }
+    if (actRes && actRes.ok) { demo.activity = actRes.activity; if (currentView === 'activity') renderActivity(); }
+    if (instRes && instRes.ok && instRes.instances.length) {
+      const keepId = currentInstance && currentInstance.id;
+      demo.instances = instRes.instances;
+      currentInstance = demo.instances.find((i) => i.id === keepId) || demo.instances[0];
+      renderDetail();
+    }
+  }
+}
+$('sweepBtn') && $('sweepBtn').addEventListener('click', runTriageSweep);
 
 // ---------- catalog ----------
 
