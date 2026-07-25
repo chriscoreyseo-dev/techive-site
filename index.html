@@ -88,7 +88,17 @@
   @media (max-width: 720px) { .nav-links a:not(.btn-login) { display: none; } }
 
   /* ============ HERO ============ */
-  .hero { padding: 96px 0 72px; text-align: center; }
+  .hero { padding: 120px 0 104px; text-align: center; position: relative; }
+  .hero-media {
+    position: absolute; top: 0; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100vw; z-index: 0; pointer-events: none; overflow: hidden;
+  }
+  .hero-media video { width: 100%; height: 100%; object-fit: cover; }
+  .hero-media::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 42%, rgba(11,15,23,0.5) 0%, rgba(11,15,23,0.92) 82%);
+  }
+  .hero > *:not(.hero-media) { position: relative; z-index: 1; }
   .hero-kicker {
     display: inline-block; padding: 6px 16px; border: 1px solid var(--hive-line);
     border-radius: 100px; background: var(--hive-soft); color: var(--hive);
@@ -116,13 +126,13 @@
   .btn-ghost:hover { border-color: var(--hive-line); background: var(--hive-soft); }
   .hero-note { margin-top: 18px; font-size: 13px; color: var(--text-faint); }
 
-  /* staggered hero entrance */
-  .hero > * { opacity: 0; transform: translateY(18px); animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) forwards; }
-  .hero > *:nth-child(1) { animation-delay: 0.05s; }
-  .hero > *:nth-child(2) { animation-delay: 0.15s; }
-  .hero > *:nth-child(3) { animation-delay: 0.28s; }
-  .hero > *:nth-child(4) { animation-delay: 0.42s; }
-  .hero > *:nth-child(5) { animation-delay: 0.55s; }
+  /* staggered hero entrance (media div excluded — it's the backdrop) */
+  .hero > *:not(.hero-media) { opacity: 0; transform: translateY(18px); animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) forwards; }
+  .hero > *:nth-child(2) { animation-delay: 0.05s; }
+  .hero > *:nth-child(3) { animation-delay: 0.15s; }
+  .hero > *:nth-child(4) { animation-delay: 0.28s; }
+  .hero > *:nth-child(5) { animation-delay: 0.42s; }
+  .hero > *:nth-child(6) { animation-delay: 0.55s; }
   @keyframes rise { to { opacity: 1; transform: none; } }
 
   /* ============ SECTIONS ============ */
@@ -179,18 +189,6 @@
   }
   .how-step h3 { font-size: 17px; font-weight: 600; margin-bottom: 10px; }
   .how-step p { font-size: 14.5px; color: var(--text-dim); }
-
-  /* ============ IGNITION BAND ============ */
-  .ignition-band {
-    margin: 6px calc(50% - 50vw) 0; overflow: hidden;
-    border-top: 1px solid var(--hive-line); border-bottom: 1px solid var(--hive-line);
-    background: var(--bg); line-height: 0;
-    display: flex; justify-content: center;
-  }
-  .ignition-band video {
-    display: block; width: min(100%, calc(80vh * 16 / 9));
-    max-height: 80vh; object-fit: contain;
-  }
 
   /* ============ OUTPUT TICKER ============ */
   .ticker-band {
@@ -346,25 +344,21 @@
 
   <!-- ============ HERO ============ -->
   <header class="hero">
+    <div class="hero-media" aria-hidden="true">
+      <video autoplay muted loop playsinline poster="assets/ignition-poster.jpg">
+        <source src="assets/ignition-strip.webm" type="video/webm" />
+        <source src="assets/ignition-strip.mp4" type="video/mp4" />
+      </video>
+    </div>
     <div class="hero-kicker">⬢ &nbsp;The AI workforce for network marketers &amp; affiliates</div>
     <h1>Your business doesn't need another tool.<br />It needs a <span class="amber">workforce</span>.</h1>
-    <p class="hero-sub">Six AI agents that do the daily work of building your business — the follow-up,
-    the content, the leads, the engagement — trained on whatever company you rep and whatever
-    you actually sell. You approve from your phone. They do the rest.</p>
+    <p class="hero-sub">You approve from your phone. They do the rest.</p>
     <div class="hero-ctas">
       <a class="btn-primary js-buy-monthly" href="https://buy.stripe.com/eVq7sMaGH9C4cSRgo03Ru07">Get your workforce — $299/mo</a>
       <a class="btn-ghost" href="/app/?demo=1">See the back office</a>
     </div>
     <p class="hero-note">Working in minutes. Knows your business by day two. No contracts — cancel anytime.</p>
   </header>
-
-  <!-- ============ IGNITION BAND (S224 — the transformation, Higgsfield loop) ============ -->
-  <div class="ignition-band" aria-hidden="true">
-    <video autoplay muted loop playsinline poster="assets/ignition-poster.jpg">
-      <source src="assets/ignition-strip.webm" type="video/webm" />
-      <source src="assets/ignition-strip.mp4" type="video/mp4" />
-    </video>
-  </div>
 
   <!-- ============ OUTPUT TICKER ============ -->
   <div class="ticker-band" aria-label="Examples of measurable agent output — not a guarantee">
