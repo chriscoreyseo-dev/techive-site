@@ -501,7 +501,7 @@ function renderChips() {
 
 function showView(view) {
   currentView = view;
-  for (const v of ['chat', 'catalog', 'approvals', 'activity', 'spawn', 'connections', 'billing', 'refer']) {
+  for (const v of ['chat', 'catalog', 'approvals', 'activity', 'spawn', 'connections', 'billing', 'refer', 'voice']) {
     $('view-' + v).classList.toggle('hidden', v !== view);
   }
   $('sidebar').classList.remove('open');
@@ -1382,6 +1382,43 @@ function attachMic(btnId, inputId) {
 
 attachMic('micBtn', 'composerInput');
 attachMic('spawnMicBtn', 'spawnGoal');
+attachMic('voiceMicBtn', 'voiceSamples');
+
+// ---------- teach it your voice (S225) ----------
+// Live: samples go to the learn_voice task — one model pass distills a
+// style-only profile, stored server-side and folded into every draft.
+// Demo: explains what would happen, stores nothing.
+
+$('voiceBtn') && $('voiceBtn').addEventListener('click', () => showView('voice'));
+$('voiceCancelBtn') && $('voiceCancelBtn').addEventListener('click', () => {
+  if (currentInstance) selectInstance(currentInstance.id); else showView('catalog');
+});
+$('voiceSaveBtn') && $('voiceSaveBtn').addEventListener('click', async () => {
+  const btn = $('voiceSaveBtn');
+  const out = $('voiceResult');
+  const samples = ($('voiceSamples').value || '').trim();
+  if (samples.length < 120) {
+    out.classList.remove('hidden');
+    out.textContent = 'Give it a bit more to study — paste at least a few full sentences you actually wrote.';
+    return;
+  }
+  if (DEMO_MODE) {
+    out.classList.remove('hidden');
+    out.textContent = 'Demo mode — on a live account, your agents would study this and every draft from here on would sound like you.';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Studying your writing…';
+  const res = await callPlatform('learn_voice', { content: samples });
+  btn.disabled = false;
+  btn.textContent = 'Save my voice';
+  out.classList.remove('hidden');
+  if (res && res.ok) {
+    out.innerHTML = mdToHtml(res.output);
+  } else {
+    out.textContent = (res && res.error) || 'Something went wrong — try again in a moment.';
+  }
+});
 
 // ---------- pause all / health strip ----------
 

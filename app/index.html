@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <!-- ?v= cache-buster (S221): bump on every app.css/app.js/brand.js edit —
      a stale cached stylesheet rendered the org avatars unsized/huge live. -->
-<link rel="stylesheet" href="app.css?v=225.2" />
+<link rel="stylesheet" href="app.css?v=225.3" />
 </head>
 <body>
 
@@ -237,6 +237,7 @@
       </div>
       <div class="chat-header-actions">
         <span id="tierChip" class="tier-chip"></span>
+        <button id="voiceBtn" class="btn-ghost">My voice</button>
         <button id="customizeBtn" class="btn-ghost">Customize</button>
       </div>
     </div>
@@ -428,6 +429,24 @@
     </div>
   </section>
 
+  <!-- ===== VIEW: teach it your voice (S225) ===== -->
+  <section id="view-voice" class="view hidden">
+    <div class="view-head">
+      <h1>Teach it your voice</h1>
+      <p>Paste — or hit the mic and read aloud — a few things you've actually written: a post, an email, a comment reply. Your agents study how you write, and from then on every draft comes out sounding like you. Style only; the more real samples, the better the match.</p>
+    </div>
+    <div class="spawn-card">
+      <label for="voiceSamples" class="spawn-label">Your writing samples</label>
+      <textarea id="voiceSamples" rows="10" placeholder="Paste 3–5 real examples — a LinkedIn or Facebook post, an email you sent, a message to your team…"></textarea>
+      <div class="spawn-actions">
+        <button id="voiceMicBtn" class="mic-btn" title="Speak instead of typing" aria-label="Speak instead of typing"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg></button>
+        <button id="voiceSaveBtn" class="btn-primary">Save my voice</button>
+        <button id="voiceCancelBtn" class="btn-ghost">Cancel</button>
+      </div>
+      <div id="voiceResult" class="spawn-note hidden"></div>
+    </div>
+  </section>
+
   <!-- ===== VIEW: spawn wizard ===== -->
   <section id="view-spawn" class="view hidden">
     <div class="view-head">
@@ -489,7 +508,7 @@
 
 <div id="scrim" class="hidden"></div>
 
-<script src="brand.js?v=225.2"></script>
-<script src="app.js?v=225.2"></script>
+<script src="brand.js?v=225.3"></script>
+<script src="app.js?v=225.3"></script>
 </body>
 </html>
