@@ -9,6 +9,16 @@
 // (tab-session only, never persisted) and every view loads server truth
 // from kitfire-platform. The demo dataset below stays as the tour's data
 // AND the shape documentation for what the server returns.
+//
+// Connector rail (S225/FLEET-0056): list_connectors/connect_start/
+// disconnect/request_connector call techive-platform's new connector
+// tasks; a successful connect_start same-tab-redirects to the provider's
+// consent page, which eventually 302s back here via the sibling
+// techive-oauth callback fn as ?view=connections&connected=<id>. Every
+// call degrades gracefully if the server hasn't been redeployed with the
+// rail yet (ok:false, unknown task) — the same honest "Coming online
+// soon" fallback either way, never an error splash. See
+// product/techive/CONNECTOR_RUNBOOK.md for the operator deploy steps.
 
 const ACCESS_CODE = sessionStorage.getItem('kf_access_code') || '';
 const DEMO_MODE = !ACCESS_CODE;
@@ -380,6 +390,22 @@ const api = {
     if (DEMO_MODE) { await wait(150); return { ok: true, usage: demo.usage, plan: demo.seat.plan.split(' · ')[0] }; }
     return callPlatform('get_usage', {});
   },
+  // ---- Connector rail (S225/FLEET-0056) ----
+  async listConnectors() {
+    if (DEMO_MODE) { await wait(150); return { ok: true, connectors: demo.connections.map((c) => ({ id: c.id, state: c.state, connected_at: null })) }; }
+    return callPlatform('list_connectors', {});
+  },
+  async connectStart(connectorId) {
+    // No demo stub needed — the demo-tour click handler flips state locally
+    // and never calls this; real transport only.
+    return callPlatform('connect_start', { connector_id: connectorId });
+  },
+  async disconnectConnector(connectorId) {
+    return callPlatform('disconnect', { connector_id: connectorId });
+  },
+  async requestConnector(text) {
+    return callPlatform('request_connector', { content: text });
+  },
 };
 
 async function callPlatform(task, payload) {
@@ -410,13 +436,14 @@ const PLAN_RATES = {
 };
 
 async function loadLiveState() {
-  const [inst, cat, appr, act, usage, refer] = await Promise.all([
+  const [inst, cat, appr, act, usage, refer, conn] = await Promise.all([
     callPlatform('list_instances', {}),
     callPlatform('list_catalog', {}),
     callPlatform('list_approvals', {}),
     callPlatform('list_activity', {}),
     callPlatform('get_usage', {}),
     callPlatform('referral_overview', {}),
+    callPlatform('list_connectors', {}),
   ]);
   if (inst && inst.ok) demo.instances = inst.instances;
   if (cat && cat.ok && cat.catalog && cat.catalog.length) demo.catalog = cat.catalog;
@@ -433,13 +460,27 @@ async function loadLiveState() {
     demo.teamSeats = [{ name: seatName, role: demo.seat.role }];
   }
   demo.invoices = []; // live invoices are in the Stripe portal ("Manage billing")
-  // Connectors honesty rule (S225, Chris catch): the OAuth rail isn't
-  // deployed yet, so on a LIVE account nothing may render "Connected" —
-  // everything shows available (MarketHive: in the works) until
-  // account-rails ships real provider OAuth.
-  demo.connections = demo.connections.map((c) =>
-    c.state === 'connected' ? { ...c, state: c.id === 'markethive' ? 'soon' : 'available' } : c
-  );
+  // Connectors (S225/FLEET-0056): list_connectors is now the source of
+  // truth per connector — the server computes real state (shelf status AND
+  // oauth_kind actually wired AND its secrets pasted). Until
+  // techive-platform is redeployed with the connector rail, `connect`
+  // above resolves ok:false (unknown task) and the fallback below applies
+  // — IDENTICAL to the pre-FLEET-0056 behavior, so the site degrades
+  // gracefully with zero regression while the fn/SQL deploy is pending
+  // (honesty rule either way: never show "Connected" without a real server
+  // record, MarketHive always "in the works").
+  if (conn && conn.ok && Array.isArray(conn.connectors)) {
+    const stateById = new Map(conn.connectors.map((c) => [c.id, c.state]));
+    demo.connections = demo.connections.map((c) =>
+      stateById.has(c.id)
+        ? { ...c, state: stateById.get(c.id) }
+        : { ...c, state: c.id === 'markethive' ? 'soon' : 'available' }
+    );
+  } else {
+    demo.connections = demo.connections.map((c) =>
+      c.state === 'connected' ? { ...c, state: c.id === 'markethive' ? 'soon' : 'available' } : c
+    );
+  }
   if (refer && refer.ok && refer.referral) {
     demo.referral = refer.referral;
   }
@@ -1051,28 +1092,73 @@ function renderConnections() {
     <button class="mini-btn line" id="connRequestBtn">Request a connector</button>`;
   grid.appendChild(req);
 
-  grid.querySelectorAll('[data-conn]').forEach((b) => b.addEventListener('click', () => {
-    // Real flow: provider OAuth on the provider's own page -> revocable
-    // token server-side (FLEET-0054 account-rails lane, not yet live).
-    // LIVE accounts never fake it (S225 honesty rule — Chris caught the
-    // demo stub flipping "Connected" with nothing behind it).
-    if (!DEMO_MODE) {
-      b.textContent = "Coming online soon — we'll email you";
-      b.disabled = true;
+  grid.querySelectorAll('[data-conn]').forEach((b) => b.addEventListener('click', async () => {
+    const id = b.dataset.conn;
+    const c = demo.connections.find((x) => x.id === id);
+    if (!c) return;
+
+    if (DEMO_MODE) {
+      c.state = c.state === 'connected' ? 'available' : 'connected';
+      renderConnections();
       return;
     }
-    const c = demo.connections.find((x) => x.id === b.dataset.conn);
-    c.state = c.state === 'connected' ? 'available' : 'connected';
-    renderConnections();
+
+    // LIVE flow (S225/FLEET-0056): real provider OAuth on the provider's
+    // own consent page -> revocable, server-side token. connect_start only
+    // returns a real URL when the connector is actually wired AND
+    // configured server-side; anything else (not yet built, secrets not
+    // pasted, or the task itself not deployed yet) fails cleanly and this
+    // falls back to the same honest "Coming online soon" text as before —
+    // never a fake "Connected", never an error splash (S225 honesty rule).
+    b.disabled = true;
+    const original = b.textContent;
+    if (c.state === 'connected') {
+      b.textContent = 'Disconnecting…';
+      const res = await api.disconnectConnector(id);
+      if (res && res.ok) {
+        c.state = 'available';
+        renderConnections();
+      } else {
+        b.textContent = original;
+        b.disabled = false;
+      }
+      return;
+    }
+    b.textContent = 'Connecting…';
+    const res = await api.connectStart(id);
+    if (res && res.ok && res.url) {
+      location.href = res.url; // same-tab redirect to the provider's own consent page
+      return;
+    }
+    b.textContent = "Coming online soon — we'll email you";
+    // stays disabled — same fallback the button always had for a
+    // not-yet-live connector, now driven by the server's real answer
+    // instead of an unconditional client-side stub.
   }));
   grid.querySelectorAll('[data-vote]').forEach((b) => b.addEventListener('click', () => {
     b.textContent = "We'll email you at launch";
     b.disabled = true;
   }));
   const reqBtn = document.getElementById('connRequestBtn');
-  reqBtn.addEventListener('click', () => {
-    reqBtn.textContent = 'Request logged';
+  reqBtn.addEventListener('click', async () => {
+    if (DEMO_MODE) {
+      reqBtn.textContent = 'Request logged';
+      reqBtn.disabled = true;
+      return;
+    }
+    const text = ((typeof window.prompt === 'function' && window.prompt('What should we add? Tell us what your business runs on.')) || '').trim();
+    if (!text) return;
+    const original = reqBtn.textContent;
     reqBtn.disabled = true;
+    const res = await api.requestConnector(text);
+    if (res && res.ok) {
+      reqBtn.textContent = 'Request logged';
+    } else {
+      // Graceful degrade (task not deployed yet, or a transient error) —
+      // never an error splash, just let them try again.
+      reqBtn.textContent = original;
+      reqBtn.disabled = false;
+    }
   });
 }
 
@@ -1489,6 +1575,28 @@ async function boot() {
     if (bootView === 'refer' && bootTab && ['overview', 'organization', 'markethive'].includes(bootTab)) {
       referTab = bootTab;
       renderReferTabs();
+    }
+    // OAuth callback return (S225/FLEET-0056): techive-oauth 302s back here
+    // as ?view=connections&connected=<id> on success, or &connect_error=
+    // <reason> on a clean deny/failure. Trust "connected" ONLY once
+    // list_connectors (already loaded above via loadLiveState) independently
+    // confirms that state — never render success off the URL param alone.
+    if (bootView === 'connections') {
+      const connectedId = params.get('connected');
+      const connectError = params.get('connect_error');
+      if (connectedId || connectError) {
+        const c = connectedId ? demo.connections.find((x) => x.id === connectedId) : null;
+        const ok = Boolean(c && c.state === 'connected');
+        const notice = document.createElement('div');
+        notice.style.cssText = 'margin:0 0 16px;padding:10px 14px;border-radius:10px;font-size:13px;' +
+          (ok
+            ? 'background:rgba(52,199,89,0.14);border:1px solid rgba(52,199,89,0.4);color:#34c759;'
+            : 'background:rgba(255,107,94,0.14);border:1px solid rgba(255,107,94,0.4);color:#ff6b5e;');
+        notice.textContent = ok ? `${c.name || connectedId} connected.` : "That didn't finish connecting — try again.";
+        const grid = $('connGrid');
+        if (grid && grid.parentNode) grid.parentNode.insertBefore(notice, grid);
+        history.replaceState(null, '', location.pathname + '?view=connections');
+      }
     }
   } else if (!DEMO_MODE && demo.instances.length === 0) {
     // A live member with no agents spawned yet lands on the catalog —
