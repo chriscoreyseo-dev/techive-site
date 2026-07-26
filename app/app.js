@@ -103,6 +103,12 @@ const demo = {
     { date: 'Jun 1, 2026', amount: '$99.00', status: 'Paid' },
   ],
   referral: { link: 'kitfire.ai/start?ref=demo-dana', earnings: 0, count: 0 },
+  // Campaigns (FLEET-0070/S230): empty on the KitFire skin — the feature
+  // is TecHive-only (kitfire-platform.ts is untouched by that job). The
+  // switcher hides itself whenever this array is empty (see
+  // renderCampaignSwitcher). Each instance below optionally carries a
+  // campaign_id ('camp-1' | null) once the TecHive skin override sets it.
+  campaigns: [],
   // Settings (FLEET-0069/S230) demo-tour fields not already covered by
   // demo.seat (name/role/plan) or demo.referral.markethive_link. email is a
   // clearly-fake placeholder — never a real address in the tour.
@@ -237,8 +243,19 @@ if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
     { id: 'inbox_triage', name: 'Triage Agent', dept: 'Ops · Inbox', owned: true,
       pitch: 'Your inbox and notifications sorted every morning — prospect replies and money matters on top, noise summarized.', price: 'Included' },
   ];
+  // Campaigns (FLEET-0070/S230): two labeled sample campaigns for the demo
+  // tour (QA requirement) — 'camp-1' owns every company-layer instance
+  // below (campaign_id set per instance, mirroring the roster split in
+  // techive-platform.ts's PERSONAL_LAYER_CATALOG_IDS); 'camp-2' starts
+  // empty, exactly like a real second campaign moments after creation
+  // (before the next list_instances preload has populated it). The
+  // switcher is entirely local in demo mode — no server calls.
+  demo.campaigns = [
+    { id: 'camp-1', name: 'My business', status: 'active' },
+    { id: 'camp-2', name: 'Downline Co-op', status: 'active' },
+  ];
   demo.instances = [
-    { id: 'inst-followup', catalog_id: 'followup_engine', name: 'Follow-Up Agent', dept: 'Sales', tier: 1,
+    { id: 'inst-followup', catalog_id: 'followup_engine', campaign_id: 'camp-1', name: 'Follow-Up Agent', dept: 'Sales', tier: 1,
       mission: 'Runs every prospect to seven meaningful touches. Drafts each message in your voice for approval, spaces them naturally, and never lets a name fall through.',
       actions: [
         { key: 'draft', name: 'Draft follow-ups', state: 'auto' },
@@ -251,7 +268,7 @@ if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
         { when: 'Yesterday 7:00am', what: '11 prospects worked · 4 drafts approved and sent' },
         { when: 'Mon 7:00am', what: '8 prospects worked · 1 asked to join your team — flagged hot' },
       ] },
-    { id: 'inst-content', catalog_id: 'content_engine', name: 'Content Agent', dept: 'Marketing', tier: 1,
+    { id: 'inst-content', catalog_id: 'content_engine', campaign_id: 'camp-1', name: 'Content Agent', dept: 'Marketing', tier: 1,
       mission: 'Keeps your feed and blog alive in your voice — daily post drafts with graphics, ready to approve each morning.',
       actions: [
         { key: 'draft_post', name: 'Draft posts & blogs', state: 'auto' },
@@ -263,7 +280,7 @@ if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
         { when: 'Today 6:30am', what: 'Tomorrow’s post drafted + graphic generated · awaiting approval' },
         { when: 'Yesterday', what: 'Post approved & published · engagement up, 4 comments handed to Engagement' },
       ] },
-    { id: 'inst-lead', catalog_id: 'lead_concierge', name: 'Lead Agent', dept: 'Sales', tier: 1,
+    { id: 'inst-lead', catalog_id: 'lead_concierge', campaign_id: 'camp-1', name: 'Lead Agent', dept: 'Sales', tier: 1,
       mission: 'Answers every capture-page lead within minutes — qualifies them, answers honest questions, and books the conversation before they go cold.',
       actions: [
         { key: 'reply', name: 'Draft lead replies', state: 'auto' },
@@ -275,7 +292,7 @@ if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
         { when: 'Today 8:14am', what: 'New lead from your capture page · replied in 4 min · booked Thursday' },
         { when: 'Yesterday', what: '2 leads worked · 1 qualified hot, handed to Follow-Up' },
       ] },
-    { id: 'inst-engage', catalog_id: 'engagement_engine', name: 'Engagement Agent', dept: 'Marketing', tier: 1,
+    { id: 'inst-engage', catalog_id: 'engagement_engine', campaign_id: 'camp-1', name: 'Engagement Agent', dept: 'Marketing', tier: 1,
       mission: 'Watches your comments and DMs around the clock. Drafts warm, human replies in your voice — you approve, your audience never feels ignored.',
       actions: [
         { key: 'comment', name: 'Draft comment replies', state: 'auto' },
@@ -287,7 +304,7 @@ if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
         { when: 'Today 7:40am', what: '6 comments + 2 DMs · replies drafted · 1 buying question flagged hot' },
         { when: 'Yesterday', what: '11 replies approved & sent · zero left waiting overnight' },
       ] },
-    { id: 'inst-team', catalog_id: 'team_builder', name: 'Duplication Agent', dept: 'Team', tier: 1,
+    { id: 'inst-team', catalog_id: 'team_builder', campaign_id: 'camp-1', name: 'Duplication Agent', dept: 'Team', tier: 1,
       mission: 'Onboards everyone you sponsor onto this same system — welcome, setup, first steps — and keeps care touches flowing to your existing team and customers.',
       actions: [
         { key: 'welcome', name: 'Draft welcomes & nudges', state: 'auto' },
@@ -299,7 +316,7 @@ if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
         { when: 'Yesterday', what: 'Kayla M. onboarded · welcome sent after your approval · checklist started' },
         { when: 'Mon', what: '3 team care touches drafted · 2 customers checked on' },
       ] },
-    { id: 'inst-triage2', catalog_id: 'inbox_triage', name: 'Triage Agent', dept: 'Ops · Inbox', tier: 1,
+    { id: 'inst-triage2', catalog_id: 'inbox_triage', campaign_id: null, name: 'Triage Agent', dept: 'Ops · Inbox', tier: 1,
       mission: 'Sorts your inbox and notifications every morning — prospect replies and money matters to the top, noise summarized, obvious replies drafted.',
       actions: [
         { key: 'sort', name: 'Sort & summarize', state: 'auto' },
@@ -311,7 +328,7 @@ if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
         { when: 'Today 6:00am', what: 'Scanned 27 messages · 2 prospect replies surfaced · 1 company notice flagged' },
         { when: 'Yesterday 6:00am', what: 'Scanned 31 messages · quiet day, nothing urgent' },
       ] },
-    { id: 'inst-ask', catalog_id: 'ask', name: 'Ask TecHive', dept: 'General', tier: 1,
+    { id: 'inst-ask', catalog_id: 'ask', campaign_id: null, name: 'Ask TecHive', dept: 'General', tier: 1,
       mission: 'General-purpose help: questions, page reads, file summaries, business memory.',
       actions: [{ key: 'answer', name: 'Answer questions', state: 'auto' }],
       streak: null,
@@ -459,6 +476,38 @@ const api = {
     }
     return callPlatform('rotate_access_code', {});
   },
+  // ---- Campaigns (S225/FLEET-0070) ----
+  // DEMO_MODE stubs never mutate demo.campaigns directly — the caller
+  // (switchCampaign / the button handlers below) applies the result
+  // uniformly for both demo and live, same pattern as updateSeatName.
+  async listCampaigns() {
+    if (DEMO_MODE) { await wait(150); return { ok: true, campaigns: demo.campaigns, allowed: demo.campaigns.length, used: demo.campaigns.length }; }
+    return callPlatform('list_campaigns', {});
+  },
+  async createCampaign(name) {
+    if (DEMO_MODE) {
+      await wait(500);
+      if (demo.campaigns.length >= 2) {
+        return {
+          ok: false,
+          upgrade: true,
+          used: demo.campaigns.length,
+          allowed: 2,
+          error: "You're using 2 of 2 campaigns on your plan. Add another campaign for $49/mo ($490/yr) to run a separate company with its own agents, fully separate from this one. *(Demo mode — sample cap for the tour.)*",
+        };
+      }
+      return { ok: true, campaign: { id: 'camp-demo-' + (demo.campaigns.length + 1), name, status: 'active' } };
+    }
+    return callPlatform('create_campaign', { name });
+  },
+  async renameCampaign(campaignId, name) {
+    if (DEMO_MODE) { await wait(250); return { ok: true, name }; }
+    return callPlatform('rename_campaign', { campaign_id: campaignId, name });
+  },
+  async archiveCampaign(campaignId) {
+    if (DEMO_MODE) { await wait(300); return { ok: true }; }
+    return callPlatform('archive_campaign', { campaign_id: campaignId });
+  },
 };
 
 async function callPlatform(task, payload) {
@@ -489,16 +538,32 @@ const PLAN_RATES = {
 };
 
 async function loadLiveState() {
+  // Campaigns (FLEET-0070/S230): resolve the active campaign BEFORE the
+  // scoped reads below — list_campaigns also ensures the client's default
+  // "My business" campaign exists on a fresh account. Pre-deploy (campaigns
+  // table not live yet) this resolves to an empty list, currentCampaignId
+  // stays null, and every scoped call below is unscoped too — byte-for-
+  // byte the pre-FLEET-0070 boot sequence, one extra network hop either way.
+  const campResult = await api.listCampaigns();
+  if (campResult && campResult.ok && Array.isArray(campResult.campaigns)) {
+    demo.campaigns = campResult.campaigns;
+    if (!currentCampaignId || !demo.campaigns.some((c) => c.id === currentCampaignId)) {
+      currentCampaignId = demo.campaigns[0] ? demo.campaigns[0].id : null;
+    }
+  }
+  const scoped = currentCampaignId ? { campaign_id: currentCampaignId } : {};
+
   const [inst, cat, appr, act, usage, refer, conn] = await Promise.all([
-    callPlatform('list_instances', {}),
+    callPlatform('list_instances', scoped),
     callPlatform('list_catalog', {}),
-    callPlatform('list_approvals', {}),
-    callPlatform('list_activity', {}),
+    callPlatform('list_approvals', scoped),
+    callPlatform('list_activity', scoped),
     callPlatform('get_usage', {}),
     callPlatform('referral_overview', {}),
     callPlatform('list_connectors', {}),
   ]);
   if (inst && inst.ok) demo.instances = inst.instances;
+  if (inst && inst.ok && Array.isArray(inst.campaigns) && inst.campaigns.length) demo.campaigns = inst.campaigns;
   if (cat && cat.ok && cat.catalog && cat.catalog.length) demo.catalog = cat.catalog;
   if (appr && appr.ok) demo.approvals = appr.approvals;
   if (act && act.ok) demo.activity = act.activity;
@@ -548,6 +613,12 @@ let currentInstance = demo.instances[0];
 let spawnTarget = null;
 let referTab = 'overview'; // S221: refer & earn sub-view (TecHive contextual sidebar)
 let orgMode = 'chart'; // S221: organization display — 'chart' (avatar tree) | 'sheet' (spreadsheet)
+// Campaigns (FLEET-0070/S230): selected campaign filter. null = "no
+// campaigns concept in play" — the KitFire skin, or a TecHive account
+// whose schema hasn't been redeployed yet (demo.campaigns stays empty
+// either way, and the switcher hides itself — see renderCampaignSwitcher).
+let currentCampaignId = null;
+let demoInstancesAll = null; // demo-tour only: unfiltered snapshot, captured once in boot()
 
 const $ = (id) => document.getElementById(id);
 
@@ -600,6 +671,162 @@ function renderChips() {
   row.appendChild(add);
 }
 
+// ---------- campaigns (FLEET-0070, S230) ----------
+// Structure only, never earnings — campaign copy is the count of what a
+// member can run, not what they make (income-claims law).
+
+function isTecHiveSkin() {
+  return Boolean(window.KF_BRAND && window.KF_BRAND.key === 'techive');
+}
+
+function closeCampaignMenu() {
+  const menu = $('campaignMenu');
+  const btn = $('campaignSwitcherBtn');
+  if (menu) menu.classList.add('hidden');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+
+function renderCampaignSwitcher() {
+  const wrap = $('campaignSwitcher');
+  if (!wrap) return;
+  const show = isTecHiveSkin() && Array.isArray(demo.campaigns) && demo.campaigns.length > 0;
+  wrap.classList.toggle('hidden', !show);
+  if (!show) return;
+
+  const current = demo.campaigns.find((c) => c.id === currentCampaignId) || demo.campaigns[0];
+  currentCampaignId = current.id;
+  $('campaignCurrentName').textContent = current.name;
+
+  const list = $('campaignMenuList');
+  list.innerHTML = '';
+  for (const c of demo.campaigns) {
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'campaign-row' + (c.id === currentCampaignId ? ' active' : '');
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'campaign-row-name';
+    nameSpan.textContent = c.name;
+    row.appendChild(nameSpan);
+    if (c.id === currentCampaignId) {
+      const check = document.createElement('span');
+      check.className = 'campaign-row-check';
+      check.innerHTML = '&#10003;';
+      row.appendChild(check);
+    }
+    row.addEventListener('click', () => switchCampaign(c.id));
+    list.appendChild(row);
+  }
+
+  const archiveBtn = $('campaignArchiveBtn');
+  if (archiveBtn) archiveBtn.classList.toggle('hidden', demo.seat.role !== 'admin');
+}
+
+function filterInstancesForCampaign(all, campaignId) {
+  if (!campaignId) return all;
+  // Personal-layer instances (campaign_id null/undefined) always show —
+  // "the personal layer always visible above the divider" (packet UI bullet).
+  return all.filter((i) => !i.campaign_id || i.campaign_id === campaignId);
+}
+
+async function switchCampaign(campaignId) {
+  if (campaignId === currentCampaignId) { closeCampaignMenu(); return; }
+  currentCampaignId = campaignId;
+  closeCampaignMenu();
+
+  if (DEMO_MODE) {
+    if (!demoInstancesAll) demoInstancesAll = demo.instances.slice();
+    demo.instances = filterInstancesForCampaign(demoInstancesAll, currentCampaignId);
+  } else {
+    const scoped = currentCampaignId ? { campaign_id: currentCampaignId } : {};
+    const [inst, appr, act] = await Promise.all([
+      callPlatform('list_instances', scoped),
+      callPlatform('list_approvals', scoped),
+      callPlatform('list_activity', scoped),
+    ]);
+    if (inst && inst.ok) demo.instances = inst.instances;
+    if (appr && appr.ok) demo.approvals = appr.approvals;
+    if (act && act.ok) demo.activity = act.activity;
+  }
+
+  currentInstance = demo.instances.find((i) => currentInstance && i.id === currentInstance.id) || demo.instances[0] || null;
+  renderCampaignSwitcher();
+  renderNav();
+  renderChips();
+  if (currentView === 'chat') { if (currentInstance) { renderChat(); renderDetail(); } }
+  if (currentView === 'approvals') renderApprovals();
+  if (currentView === 'activity') renderActivity();
+}
+
+const campaignSwitcherBtnEl = $('campaignSwitcherBtn');
+if (campaignSwitcherBtnEl) {
+  campaignSwitcherBtnEl.addEventListener('click', () => {
+    const menu = $('campaignMenu');
+    const willOpen = menu.classList.contains('hidden');
+    menu.classList.toggle('hidden', !willOpen);
+    campaignSwitcherBtnEl.setAttribute('aria-expanded', String(willOpen));
+  });
+}
+document.addEventListener('click', (e) => {
+  const wrap = $('campaignSwitcher');
+  if (wrap && !wrap.classList.contains('hidden') && !wrap.contains(e.target)) closeCampaignMenu();
+});
+
+const campaignAddBtnEl = $('campaignAddBtn');
+if (campaignAddBtnEl) {
+  campaignAddBtnEl.addEventListener('click', async () => {
+    const name = ((typeof window.prompt === 'function' && window.prompt('Name this campaign (the company or downline it runs):')) || '').trim();
+    if (!name) return;
+    const res = await api.createCampaign(name);
+    if (res && res.ok && res.campaign) {
+      demo.campaigns.push(res.campaign);
+      await switchCampaign(res.campaign.id);
+    } else if (res && res.upgrade) {
+      window.alert(res.error || "You're at your campaign limit — upgrade to add another.");
+    } else {
+      window.alert((res && res.error) || 'Could not create that campaign — try again in a moment.');
+    }
+  });
+}
+
+const campaignRenameBtnEl = $('campaignRenameBtn');
+if (campaignRenameBtnEl) {
+  campaignRenameBtnEl.addEventListener('click', async () => {
+    const current = demo.campaigns.find((c) => c.id === currentCampaignId) || demo.campaigns[0];
+    if (!current) return;
+    const name = ((typeof window.prompt === 'function' && window.prompt('Rename this campaign:', current.name)) || '').trim();
+    if (!name || name === current.name) { closeCampaignMenu(); return; }
+    const res = await api.renameCampaign(current.id, name);
+    closeCampaignMenu();
+    if (res && res.ok) {
+      current.name = res.name || name;
+      renderCampaignSwitcher();
+    } else {
+      window.alert((res && res.error) || 'Could not rename that campaign — try again in a moment.');
+    }
+  });
+}
+
+const campaignArchiveBtnEl = $('campaignArchiveBtn');
+if (campaignArchiveBtnEl) {
+  campaignArchiveBtnEl.addEventListener('click', async () => {
+    const current = demo.campaigns.find((c) => c.id === currentCampaignId) || demo.campaigns[0];
+    if (!current) return;
+    const confirmed = window.confirm(
+      `Archive "${current.name}"? Its agents stop running and it drops off your switcher — nothing is deleted, and you can start a new campaign any time.`
+    );
+    closeCampaignMenu();
+    if (!confirmed) return;
+    const res = await api.archiveCampaign(current.id);
+    if (res && res.ok) {
+      demo.campaigns = demo.campaigns.filter((c) => c.id !== current.id);
+      currentCampaignId = demo.campaigns[0] ? demo.campaigns[0].id : null;
+      await switchCampaign(currentCampaignId);
+    } else {
+      window.alert((res && res.error) || 'Could not archive that campaign — try again in a moment.');
+    }
+  });
+}
+
 function showView(view) {
   currentView = view;
   for (const v of ['chat', 'catalog', 'approvals', 'activity', 'spawn', 'connections', 'billing', 'refer', 'voice', 'settings']) {
@@ -607,6 +834,7 @@ function showView(view) {
   }
   $('sidebar').classList.remove('open');
   $('scrim').classList.add('hidden');
+  renderCampaignSwitcher();
   renderNav();
   renderChips();
   if (view === 'catalog') renderCatalog();
@@ -1795,13 +2023,25 @@ $('pauseAllBtn').addEventListener('click', () => {
 // ---------- init ----------
 
 async function boot() {
-  if (!DEMO_MODE) await loadLiveState();
+  if (!DEMO_MODE) {
+    await loadLiveState();
+  } else if (isTecHiveSkin() && demo.campaigns.length) {
+    // Demo tour (FLEET-0070): default to the first sample campaign and
+    // apply the same client-side filter switchCampaign() uses later — a
+    // no-op today since every company-layer demo instance already belongs
+    // to 'camp-1', but it keeps first paint and post-switch behavior
+    // identical in shape.
+    currentCampaignId = demo.campaigns[0].id;
+    demoInstancesAll = demo.instances.slice();
+    demo.instances = filterInstancesForCampaign(demoInstancesAll, currentCampaignId);
+  }
 
   $('seatName').textContent = demo.seat.display_name;
   $('seatPlan').textContent = demo.seat.plan;
   $('seatAvatar').textContent = demo.seat.display_name.charAt(0);
   $('topbarAvatar').textContent = demo.seat.display_name.charAt(0);
   $('topbarAvatar').title = demo.seat.display_name;
+  renderCampaignSwitcher();
   renderNav();
   renderChips();
   if (currentInstance) {

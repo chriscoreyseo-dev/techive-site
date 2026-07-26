@@ -68,6 +68,51 @@ body {
 }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
+/* ---- campaign switcher (FLEET-0070, S230) ---- */
+.campaign-switcher { position: relative; }
+.campaign-switcher-btn {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 9px 10px; border-radius: 9px; text-align: left;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--line);
+  color: var(--text); font: 600 13px var(--font-ui); cursor: pointer;
+}
+.campaign-switcher-btn:hover { background: rgba(255,255,255,0.07); }
+.campaign-ico { color: var(--ember); font-size: 11px; }
+.campaign-current-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.campaign-caret { color: var(--text-faint); font-size: 11px; }
+.campaign-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 20;
+  background: var(--bg-raise); border: 1px solid var(--line-strong);
+  border-radius: 10px; padding: 8px; box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+}
+.campaign-menu-label {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-faint); padding: 2px 8px 6px;
+}
+.campaign-row {
+  display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  background: none; border: none; color: var(--text-dim);
+  font: 500 13px var(--font-ui); padding: 8px 8px; border-radius: 7px; cursor: pointer;
+}
+.campaign-row:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+.campaign-row.active { background: var(--ember-soft); color: var(--text); }
+.campaign-row-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.campaign-row-check { color: var(--ember); font-size: 12px; }
+.campaign-add-row {
+  display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  background: none; border: none; color: var(--text-faint);
+  font: 500 13px var(--font-ui); padding: 8px 8px; border-radius: 7px; cursor: pointer;
+  margin-top: 2px; border-top: 1px solid var(--line);
+}
+.campaign-add-row:hover { color: var(--ember); }
+.campaign-menu-foot { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+.campaign-menu-link {
+  background: none; border: none; text-align: left; cursor: pointer;
+  font: 500 11.5px var(--font-ui); color: var(--text-faint); padding: 6px 8px; border-radius: 7px;
+}
+.campaign-menu-link:hover { color: var(--text-dim); background: rgba(255,255,255,0.05); }
+.campaign-menu-link.danger:hover { color: #ff6b5e; }
+
 .nav-section { display: flex; flex-direction: column; gap: 2px; }
 .nav-label {
   font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;

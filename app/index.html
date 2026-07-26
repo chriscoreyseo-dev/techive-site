@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <!-- ?v= cache-buster (S221): bump on every app.css/app.js/brand.js edit —
      a stale cached stylesheet rendered the org avatars unsized/huge live. -->
-<link rel="stylesheet" href="app.css?v=230.1" />
+<link rel="stylesheet" href="app.css?v=230.2" />
 </head>
 <body>
 
@@ -141,6 +141,29 @@
   <div class="brand">
     <span class="brand-kit">Kit</span><span class="brand-fire">Fire</span>
     <span class="brand-dot" title="Connected"></span>
+  </div>
+
+  <!-- ===== CAMPAIGN SWITCHER (FLEET-0070, S230) =====
+       TecHive-only (hidden via JS on the KitFire skin / whenever the
+       account has no campaigns yet — pre-deploy or a plan without the
+       feature). Structure only: campaigns are never framed as earnings. -->
+  <div id="campaignSwitcher" class="campaign-switcher hidden">
+    <button id="campaignSwitcherBtn" class="campaign-switcher-btn" type="button" aria-haspopup="true" aria-expanded="false">
+      <span class="campaign-ico">&#9670;</span>
+      <span id="campaignCurrentName" class="campaign-current-name">My business</span>
+      <span class="campaign-caret">&#9662;</span>
+    </button>
+    <div id="campaignMenu" class="campaign-menu hidden">
+      <div class="campaign-menu-label">Campaigns</div>
+      <div id="campaignMenuList"></div>
+      <button id="campaignAddBtn" class="campaign-add-row" type="button">
+        <span class="nav-ico">+</span> Add a campaign
+      </button>
+      <div class="campaign-menu-foot">
+        <button id="campaignRenameBtn" class="campaign-menu-link" type="button">Rename current</button>
+        <button id="campaignArchiveBtn" class="campaign-menu-link danger hidden" type="button">Archive current</button>
+      </div>
+    </div>
   </div>
 
   <nav class="nav-section">
@@ -557,7 +580,7 @@
 
 <div id="scrim" class="hidden"></div>
 
-<script src="brand.js?v=230.1"></script>
-<script src="app.js?v=230.1"></script>
+<script src="brand.js?v=230.2"></script>
+<script src="app.js?v=230.2"></script>
 </body>
 </html>
