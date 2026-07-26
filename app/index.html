@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <!-- ?v= cache-buster (S221): bump on every app.css/app.js/brand.js edit —
      a stale cached stylesheet rendered the org avatars unsized/huge live. -->
-<link rel="stylesheet" href="app.css?v=225.5" />
+<link rel="stylesheet" href="app.css?v=230.1" />
 </head>
 <body>
 
@@ -176,6 +176,9 @@
     <button class="nav-item" data-view="refer">
       <span class="nav-ico">&#9829;</span> Refer &amp; earn
     </button>
+    <button class="nav-item" data-view="settings">
+      <span class="nav-ico">&#9881;</span> Settings
+    </button>
     </div>
     <!-- Contextual sub-menu (S221 redesign): while Refer & earn is open
          on the TecHive skin, the Workspace list swaps to this menu — the
@@ -205,7 +208,7 @@
         <div class="usage-reset" id="weekReset"></div>
       </div>
     </div>
-    <div class="seat-chip">
+    <div class="seat-chip" id="seatChip" title="Settings" role="button" tabindex="0">
       <div class="seat-avatar" id="seatAvatar">C</div>
       <div class="seat-meta">
         <div class="seat-name" id="seatName">Demo seat</div>
@@ -224,7 +227,7 @@
     <div id="chipRow"></div>
     <div class="topbar-right">
       <button id="fullscreenBtn" class="icon-btn" title="Open full screen" aria-label="Open full screen">&#x26F6;</button>
-      <span id="topbarAvatar" class="topbar-avatar" title=""></span>
+      <span id="topbarAvatar" class="topbar-avatar" role="button" tabindex="0" title="Settings"></span>
     </div>
   </header>
 
@@ -477,6 +480,47 @@
       </div>
     </div>
   </section>
+
+  <!-- ===== VIEW: settings (FLEET-0069, S230) ===== -->
+  <section id="view-settings" class="view hidden">
+    <div class="view-head">
+      <h1>Settings</h1>
+      <p>Your name, your access code, your voice profile — the account basics, in one place.</p>
+    </div>
+    <div id="settingsDemoNote" class="settings-note hidden">Demo mode — nothing on this page is saved.</div>
+    <div id="settingsNotLive" class="settings-note hidden"></div>
+    <div class="billing-wrap">
+      <div class="bill-card">
+        <div class="bill-card-title">Profile</div>
+        <label for="settingsNameInput" class="spawn-label" style="margin-top:10px">Your name</label>
+        <div class="refer-link-row">
+          <input id="settingsNameInput" type="text" maxlength="60" placeholder="Your name" autocomplete="off" />
+          <button class="mini-btn fire" id="settingsNameSaveBtn">Save</button>
+        </div>
+        <div class="plan-line"><span>Email</span><b id="settingsEmail">—</b></div>
+        <div class="plan-line"><span>Plan</span><b id="settingsPlan">—</b></div>
+      </div>
+      <div class="bill-card">
+        <div class="bill-card-title">Access code</div>
+        <div class="bill-hint" style="margin-bottom:10px">This code is how the panel knows it's you — there's no password to remember or reset. Lost it, or think someone else has it? Send yourself a new one; the old code stops working the moment the new one goes out.</div>
+        <button class="btn-ghost hidden" id="rotateCodeBtn">Send me a new access code</button>
+        <div class="bill-hint role-hint" id="rotateCodeMemberNote">Only admins can rotate the access code.</div>
+        <div id="settingsCodeNote" class="spawn-note hidden" style="margin-top:10px"></div>
+      </div>
+      <div class="bill-card">
+        <div class="bill-card-title">Shortcuts</div>
+        <button class="btn-ghost" id="settingsVoiceBtn" style="width:100%;margin-bottom:6px">My voice</button>
+        <div class="bill-hint" id="settingsVoiceStatus" style="margin-bottom:14px"></div>
+        <button class="btn-ghost techive-only" id="settingsMhBtn" style="width:100%;margin-bottom:6px">MarketHive link</button>
+        <div class="bill-hint techive-only" id="settingsMhStatus"></div>
+      </div>
+      <div class="bill-card">
+        <div class="bill-card-title">Sign out</div>
+        <div class="bill-hint" style="margin-bottom:10px">Clears your access code from this browser. You'll need it again — from the email we sent you — to sign back in.</div>
+        <button class="mini-btn line" id="signOutBtn">Sign out</button>
+      </div>
+    </div>
+  </section>
 </main>
 
 <!-- ============ RIGHT RAIL: agent detail ============ -->
@@ -513,7 +557,7 @@
 
 <div id="scrim" class="hidden"></div>
 
-<script src="brand.js?v=225.6"></script>
-<script src="app.js?v=225.9"></script>
+<script src="brand.js?v=230.1"></script>
+<script src="app.js?v=230.1"></script>
 </body>
 </html>

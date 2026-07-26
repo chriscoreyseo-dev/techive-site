@@ -103,6 +103,10 @@ const demo = {
     { date: 'Jun 1, 2026', amount: '$99.00', status: 'Paid' },
   ],
   referral: { link: 'kitfire.ai/start?ref=demo-dana', earnings: 0, count: 0 },
+  // Settings (FLEET-0069/S230) demo-tour fields not already covered by
+  // demo.seat (name/role/plan) or demo.referral.markethive_link. email is a
+  // clearly-fake placeholder — never a real address in the tour.
+  settings: { email: 'dana@yourbusiness.com', voice_profile_on_file: false },
   // Usage allotments (Anthropic-style): a rolling 5-hour session window and a
   // weekly window. Server-side truth: percentages computed from worker_usage
   // token sums vs the plan's allotment; the client only renders what the
@@ -182,6 +186,7 @@ if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
   demo.seat = { display_name: 'Marcus (Demo)', plan: 'TecHive · $299/mo founding rate', role: 'admin' };
   demo.teamSeats = [{ name: 'Marcus (Demo)', role: 'admin' }];
   demo.referral = { link: 'techive.ai/start?ref=demo-marcus', earnings: '119.60', count: 5 };
+  demo.settings = { email: 'marcus@yourbusiness.com', voice_profile_on_file: true };
   // Demo org chart — the customer-visible projection of affiliate_profiles
   // (genealogy) + commission_ledger (money). Production: the
   // referral_overview platform task (contract in TECHIVE_ONEPAGER.md).
@@ -420,6 +425,40 @@ const api = {
     }
     return callPlatform('run_triage', { instance_id: instanceId });
   },
+  // ---- Settings (S225/FLEET-0069) ----
+  async getSettings() {
+    if (DEMO_MODE) {
+      await wait(150);
+      return {
+        ok: true,
+        settings: {
+          display_name: demo.seat.display_name,
+          role: demo.seat.role,
+          plan: demo.seat.plan.split(' · ')[0],
+          markethive_link: demo.referral.markethive_link || '',
+          voice_profile_on_file: demo.settings.voice_profile_on_file,
+          email: demo.settings.email,
+        },
+      };
+    }
+    return callPlatform('get_settings', {});
+  },
+  async updateSeatName(name) {
+    if (DEMO_MODE) {
+      await wait(250);
+      demo.seat.display_name = name;
+      demo.teamSeats = [{ name, role: demo.seat.role }];
+      return { ok: true, display_name: name };
+    }
+    return callPlatform('update_seat_name', { display_name: name });
+  },
+  async rotateAccessCode() {
+    if (DEMO_MODE) {
+      await wait(700);
+      return { ok: true, message: "Demo mode — on a live account we'd email your new code right now, and your old code would stop working." };
+    }
+    return callPlatform('rotate_access_code', {});
+  },
 };
 
 async function callPlatform(task, payload) {
@@ -563,7 +602,7 @@ function renderChips() {
 
 function showView(view) {
   currentView = view;
-  for (const v of ['chat', 'catalog', 'approvals', 'activity', 'spawn', 'connections', 'billing', 'refer', 'voice']) {
+  for (const v of ['chat', 'catalog', 'approvals', 'activity', 'spawn', 'connections', 'billing', 'refer', 'voice', 'settings']) {
     $('view-' + v).classList.toggle('hidden', v !== view);
   }
   $('sidebar').classList.remove('open');
@@ -576,6 +615,7 @@ function showView(view) {
   if (view === 'connections') renderConnections();
   if (view === 'billing') renderBilling();
   if (view === 'refer') { referTab = 'overview'; renderRefer(); renderReferTabs(); }
+  if (view === 'settings') renderSettings();
 }
 
 function selectInstance(id) {
@@ -607,6 +647,14 @@ $('scrim').addEventListener('click', () => {
   $('sidebar').classList.remove('open');
   $('scrim').classList.add('hidden');
 });
+// FLEET-0069/S230: Settings is reachable from a gear item in the sidebar
+// Workspace list (wired by the generic data-view handler above) AND from
+// clicking either the topbar avatar or the sidebar seat chip.
+$('topbarAvatar').addEventListener('click', () => showView('settings'));
+$('topbarAvatar').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showView('settings'); } });
+$('seatChip').addEventListener('click', () => showView('settings'));
+$('seatChip').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showView('settings'); } });
+
 $('fullscreenBtn').addEventListener('click', () => {
   // In the packaged extension this calls chrome.tabs.create({url: 'index.html'})
   // via the background worker; in the hosted app it's already full screen.
@@ -1603,6 +1651,122 @@ $('voiceSaveBtn') && $('voiceSaveBtn').addEventListener('click', async () => {
   } else {
     out.textContent = (res && res.error) || 'Something went wrong — try again in a moment.';
   }
+});
+
+// ---------- settings (FLEET-0069/S230) ----------
+// "I can't change my password, can't look at it — we have no settings
+// feature" (Chris, S230). Same degrade-gracefully posture as the connector
+// rail and morning sweep above: this view's own tasks (get_settings,
+// update_seat_name, rotate_access_code) may not be redeployed on
+// techive-platform yet — every call here checks for that specific "unknown
+// task" shape and shows a calm note instead of a raw error, same as
+// runTriageSweep's fallback. DEMO_MODE never calls the server at all —
+// actions are stubbed locally and the view carries a visible demo note.
+
+function settingsTaskNotLive(res) {
+  return Boolean(res) && typeof res.error === 'string' && /unknown task/i.test(res.error);
+}
+
+async function renderSettings() {
+  // Prime the shell from what's already known locally (demo.seat is real
+  // live data too once loadLiveState's get_usage call has run — get_usage
+  // is long-deployed, so name/role/plan render correctly even before
+  // get_settings itself is redeployed) — only email / MarketHive link /
+  // voice-taught status truly depend on the new task.
+  $('settingsNameInput').value = demo.seat.display_name;
+  $('settingsPlan').textContent = demo.seat.plan.split(' · ')[0];
+  $('settingsEmail').textContent = DEMO_MODE ? demo.settings.email : '—';
+  $('rotateCodeBtn').classList.toggle('hidden', demo.seat.role !== 'admin');
+  $('rotateCodeMemberNote').classList.toggle('hidden', demo.seat.role === 'admin');
+  $('settingsVoiceStatus').textContent = '';
+  $('settingsMhStatus').textContent = '';
+  $('settingsCodeNote').classList.add('hidden');
+  $('settingsDemoNote').classList.toggle('hidden', !DEMO_MODE);
+  $('settingsNotLive').classList.add('hidden');
+
+  const res = await api.getSettings();
+  if (res && res.ok && res.settings) {
+    const s = res.settings;
+    $('settingsNameInput').value = s.display_name || demo.seat.display_name;
+    $('settingsEmail').textContent = s.email || '—';
+    $('settingsPlan').textContent = s.plan || demo.seat.plan.split(' · ')[0];
+    $('rotateCodeBtn').classList.toggle('hidden', s.role !== 'admin');
+    $('rotateCodeMemberNote').classList.toggle('hidden', s.role === 'admin');
+    $('settingsVoiceStatus').textContent = s.voice_profile_on_file
+      ? 'Taught — your agents already draft in your voice.'
+      : "Not taught yet — teach it below and every draft matches how you write.";
+    $('settingsMhStatus').textContent = s.markethive_link ? 'On file: ' + s.markethive_link : 'Not set yet.';
+  } else if (!DEMO_MODE) {
+    const note = $('settingsNotLive');
+    note.classList.remove('hidden');
+    note.textContent = settingsTaskNotLive(res)
+      ? "Some of this page isn't live yet — check back soon. You can still sign out below."
+      : ((res && res.error) || "Couldn't load the rest of your settings — try again in a moment.");
+  }
+}
+
+$('settingsNameSaveBtn').addEventListener('click', async () => {
+  const btn = $('settingsNameSaveBtn');
+  const v = ($('settingsNameInput').value || '').trim();
+  if (!v) { $('settingsNameInput').focus(); return; }
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  const res = await api.updateSeatName(v);
+  btn.disabled = false;
+  if (res && res.ok) {
+    btn.textContent = 'Saved';
+    demo.seat.display_name = res.display_name || v;
+    $('seatName').textContent = demo.seat.display_name;
+    $('seatAvatar').textContent = demo.seat.display_name.charAt(0);
+    $('topbarAvatar').textContent = demo.seat.display_name.charAt(0);
+    $('topbarAvatar').title = demo.seat.display_name + ' · Settings';
+    renderNav();
+  } else if (!DEMO_MODE && settingsTaskNotLive(res)) {
+    btn.textContent = "Not live yet";
+  } else {
+    btn.textContent = (res && res.error) || 'Try again';
+  }
+  setTimeout(() => { btn.textContent = 'Save'; }, 2400);
+});
+
+$('rotateCodeBtn').addEventListener('click', async () => {
+  const confirmed = window.confirm(
+    "Send yourself a new access code?\n\nYour CURRENT code stops working the moment the new one goes out — you'll need the new code from your email to sign back in."
+  );
+  if (!confirmed) return;
+  const btn = $('rotateCodeBtn');
+  const note = $('settingsCodeNote');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  const res = await api.rotateAccessCode();
+  btn.disabled = false;
+  btn.textContent = 'Send me a new access code';
+  note.classList.remove('hidden');
+  if (res && res.ok) {
+    note.textContent = res.message || "We emailed your new code — the old one just stopped working.";
+  } else if (!DEMO_MODE && settingsTaskNotLive(res)) {
+    note.textContent = "Access-code rotation isn't live yet — check back soon.";
+  } else {
+    note.textContent = (res && res.error) || "Couldn't rotate your code — try again in a moment.";
+  }
+});
+
+$('settingsVoiceBtn').addEventListener('click', () => showView('voice'));
+
+$('settingsMhBtn').addEventListener('click', () => {
+  // Reuses the existing Refer & earn / MarketHive tab — never a duplicate
+  // save flow (packet: "reuse existing views/tasks, don't duplicate").
+  showView('refer');
+  referTab = 'markethive';
+  renderReferTabs();
+});
+
+$('signOutBtn').addEventListener('click', () => {
+  sessionStorage.removeItem('kf_access_code');
+  // Strip any query string (?demo=1, ?view=..., OAuth return params) so the
+  // reload lands cleanly back on the member gate rather than re-opening
+  // whatever mode/view was in the URL.
+  location.href = location.pathname;
 });
 
 // ---------- pause all / health strip ----------

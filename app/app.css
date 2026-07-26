@@ -126,6 +126,7 @@ body {
   background: var(--ember); color: #fff;
   display: inline-flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 600; margin-left: 4px;
+  cursor: pointer; /* FLEET-0069: opens Settings */
 }
 
 /* ---- usage meter (Anthropic-style session + weekly allotment) ---- */
@@ -169,7 +170,9 @@ body {
   display: flex; align-items: center; gap: 10px;
   padding: 10px; border-radius: 10px;
   background: rgba(255,255,255,0.04);
+  cursor: pointer; /* FLEET-0069: opens Settings */
 }
+.seat-chip:hover { background: rgba(255,255,255,0.07); }
 .seat-avatar {
   width: 32px; height: 32px; border-radius: 50%;
   background: var(--ember); color: #fff;
@@ -676,6 +679,21 @@ html:not([data-brand="techive"]) .techive-only { display: none; }
   border-radius: 8px; background: transparent; color: var(--text);
 }
 #mhLinkInput:focus { outline: none; border-color: var(--ember-line); }
+
+/* ---- settings (FLEET-0069, S230) ---- */
+#settingsNameInput {
+  flex: 1; min-width: 0; font: inherit; font-size: 13px;
+  padding: 8px 10px; border: 1px solid var(--line, #d8d4cc);
+  border-radius: 8px; background: transparent; color: var(--text);
+}
+#settingsNameInput:focus { outline: none; border-color: var(--ember-line); }
+.settings-note {
+  margin: 0 28px 10px; padding: 9px 14px; border-radius: 9px; font-size: 12.5px;
+  background: var(--ember-soft); border: 1px solid var(--ember-line); color: var(--ember);
+}
+#settingsNotLive.settings-note {
+  background: rgba(154,164,181,0.12); border-color: var(--line-strong); color: var(--text-dim);
+}
 .org-card { grid-column: 1 / -1; }
 .org-level { margin-bottom: 14px; }
 .org-level-head {
