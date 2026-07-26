@@ -112,7 +112,11 @@ const demo = {
   // Settings (FLEET-0069/S230) demo-tour fields not already covered by
   // demo.seat (name/role/plan) or demo.referral.markethive_link. email is a
   // clearly-fake placeholder — never a real address in the tour.
-  settings: { email: 'dana@yourbusiness.com', voice_profile_on_file: false },
+  // email_pings_enabled (FLEET-0071/S230): the demo tour's local copy of
+  // the pref — flipping it in the tour never calls the server (DEMO_MODE
+  // stubs, see api.updateNotificationPrefs below) and the tour never sends
+  // real email regardless of this value.
+  settings: { email: 'dana@yourbusiness.com', voice_profile_on_file: false, email_pings_enabled: true },
   // Usage allotments (Anthropic-style): a rolling 5-hour session window and a
   // weekly window. Server-side truth: percentages computed from worker_usage
   // token sums vs the plan's allotment; the client only renders what the
@@ -192,7 +196,7 @@ if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
   demo.seat = { display_name: 'Marcus (Demo)', plan: 'TecHive · $299/mo founding rate', role: 'admin' };
   demo.teamSeats = [{ name: 'Marcus (Demo)', role: 'admin' }];
   demo.referral = { link: 'techive.ai/start?ref=demo-marcus', earnings: '119.60', count: 5 };
-  demo.settings = { email: 'marcus@yourbusiness.com', voice_profile_on_file: true };
+  demo.settings = { email: 'marcus@yourbusiness.com', voice_profile_on_file: true, email_pings_enabled: true };
   // Demo org chart — the customer-visible projection of affiliate_profiles
   // (genealogy) + commission_ledger (money). Production: the
   // referral_overview platform task (contract in TECHIVE_ONEPAGER.md).
@@ -455,10 +459,20 @@ const api = {
           markethive_link: demo.referral.markethive_link || '',
           voice_profile_on_file: demo.settings.voice_profile_on_file,
           email: demo.settings.email,
+          email_pings_enabled: demo.settings.email_pings_enabled,
         },
       };
     }
     return callPlatform('get_settings', {});
+  },
+  // ---- Dispatch ping preference (S225/FLEET-0071) ----
+  async updateNotificationPrefs(enabled) {
+    if (DEMO_MODE) {
+      await wait(200);
+      demo.settings.email_pings_enabled = enabled;
+      return { ok: true, email_pings_enabled: enabled };
+    }
+    return callPlatform('update_notification_prefs', { email_pings_enabled: enabled });
   },
   async updateSeatName(name) {
     if (DEMO_MODE) {
@@ -1911,6 +1925,11 @@ async function renderSettings() {
   $('settingsCodeNote').classList.add('hidden');
   $('settingsDemoNote').classList.toggle('hidden', !DEMO_MODE);
   $('settingsNotLive').classList.add('hidden');
+  // FLEET-0071: default ON (matches the server's own no-row-yet default in
+  // techive-platform.ts) until get_settings says otherwise below.
+  $('settingsPingToggle').checked = DEMO_MODE ? demo.settings.email_pings_enabled !== false : true;
+  $('settingsPingNote').classList.add('hidden');
+  renderA2hsHint();
 
   const res = await api.getSettings();
   if (res && res.ok && res.settings) {
@@ -1924,6 +1943,7 @@ async function renderSettings() {
       ? 'Taught — your agents already draft in your voice.'
       : "Not taught yet — teach it below and every draft matches how you write.";
     $('settingsMhStatus').textContent = s.markethive_link ? 'On file: ' + s.markethive_link : 'Not set yet.';
+    $('settingsPingToggle').checked = s.email_pings_enabled !== false;
   } else if (!DEMO_MODE) {
     const note = $('settingsNotLive');
     note.classList.remove('hidden');
@@ -1932,6 +1952,46 @@ async function renderSettings() {
       : ((res && res.error) || "Couldn't load the rest of your settings — try again in a moment.");
   }
 }
+
+// ---------- Add to Home Screen hint (FLEET-0071, S230) ----------
+// Dismissal persists in localStorage (survives tab close/reopen, unlike
+// sessionStorage-scoped auth) — never shown again once dismissed on this
+// device. Also skipped when the app is ALREADY running installed
+// (display-mode: standalone) — the hint's whole job is done at that point.
+const A2HS_DISMISS_KEY = 'kf_a2hs_dismissed';
+function renderA2hsHint() {
+  const card = $('settingsA2hsCard');
+  if (!card) return;
+  const alreadyInstalled = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+  const dismissed = localStorage.getItem(A2HS_DISMISS_KEY) === '1';
+  card.classList.toggle('hidden', alreadyInstalled || dismissed);
+}
+const a2hsDismissBtn = $('settingsA2hsDismissBtn');
+if (a2hsDismissBtn) {
+  a2hsDismissBtn.addEventListener('click', () => {
+    localStorage.setItem(A2HS_DISMISS_KEY, '1');
+    renderA2hsHint();
+  });
+}
+
+$('settingsPingToggle').addEventListener('change', async () => {
+  const toggle = $('settingsPingToggle');
+  const note = $('settingsPingNote');
+  const next = toggle.checked;
+  toggle.disabled = true;
+  const res = await api.updateNotificationPrefs(next);
+  toggle.disabled = false;
+  note.classList.remove('hidden');
+  if (res && res.ok) {
+    note.textContent = next ? "You'll get an email when drafts are ready." : "Email pings are off.";
+    setTimeout(() => note.classList.add('hidden'), 2400);
+  } else {
+    toggle.checked = !next; // revert — the save didn't take, don't lie about the state
+    note.textContent = (!DEMO_MODE && settingsTaskNotLive(res))
+      ? "This preference isn't live yet — check back soon."
+      : ((res && res.error) || "Couldn't save that — try again in a moment.");
+  }
+});
 
 $('settingsNameSaveBtn').addEventListener('click', async () => {
   const btn = $('settingsNameSaveBtn');

@@ -9,7 +9,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <!-- ?v= cache-buster (S221): bump on every app.css/app.js/brand.js edit —
      a stale cached stylesheet rendered the org avatars unsized/huge live. -->
-<link rel="stylesheet" href="app.css?v=230.2" />
+<link rel="stylesheet" href="app.css?v=230.3" />
+<!-- PWA install (FLEET-0071, S230): TecHive-branded manifest — this app/
+     directory is shared with the KitFire skin (brand.js), but the static
+     manifest fields (name/theme) are TecHive's per the packet; a future
+     KitFire-specific manifest is a separate add if that skin ever wants
+     its own installable app. start_url deep-links straight to Approvals so
+     "add to home screen" -> tap -> approve is the whole loop from a phone. -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#f59e0b" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
 </head>
 <body>
 
@@ -537,6 +546,27 @@
         <button class="btn-ghost techive-only" id="settingsMhBtn" style="width:100%;margin-bottom:6px">MarketHive link</button>
         <div class="bill-hint techive-only" id="settingsMhStatus"></div>
       </div>
+      <!-- ===== Notifications (FLEET-0071, S230) — digest-gated email ping
+           preference. Default ON server-side; this checkbox only ever
+           reflects and writes that one boolean. ===== -->
+      <div class="bill-card">
+        <div class="bill-card-title">Notifications</div>
+        <label class="pref-row" for="settingsPingToggle">
+          <input type="checkbox" id="settingsPingToggle" />
+          <span>Email me when drafts are ready to approve</span>
+        </label>
+        <div class="bill-hint">One email at a time, at most every 30 minutes — never a flood. The email itself never contains your draft's actual text, only which agent and how many are waiting.</div>
+        <div id="settingsPingNote" class="spawn-note hidden" style="margin-top:6px"></div>
+      </div>
+      <!-- ===== Add to Home Screen hint (FLEET-0071, S230) — dismissible,
+           persists the dismissal in localStorage (not sessionStorage: this
+           is a "don't show me this again" preference, not a login state,
+           and should stay dismissed across future visits/tabs). ===== -->
+      <div class="bill-card hidden" id="settingsA2hsCard">
+        <div class="bill-card-title">Install TecHive</div>
+        <div class="bill-hint">Add TecHive to your home screen for one-tap access to Approvals from your phone. In your browser's menu, look for "Add to Home Screen" or "Install app".</div>
+        <button class="mini-btn line" id="settingsA2hsDismissBtn" style="align-self:flex-start">Got it</button>
+      </div>
       <div class="bill-card">
         <div class="bill-card-title">Sign out</div>
         <div class="bill-hint" style="margin-bottom:10px">Clears your access code from this browser. You'll need it again — from the email we sent you — to sign back in.</div>
@@ -580,7 +610,20 @@
 
 <div id="scrim" class="hidden"></div>
 
-<script src="brand.js?v=230.2"></script>
-<script src="app.js?v=230.2"></script>
+<script src="brand.js?v=230.3"></script>
+<script src="app.js?v=230.3"></script>
+<!-- PWA service worker (FLEET-0071, S230): network-first passthrough only,
+     no offline caching of member data (privacy over cleverness — packet
+     requirement). Registration itself is independent of login/DEMO_MODE;
+     the worker never runs unless the browser supports it, and a failed
+     registration is silently swallowed — this is a progressive-enhancement
+     install affordance, never something the app depends on to function. -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
 </body>
 </html>
