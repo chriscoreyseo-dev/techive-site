@@ -192,6 +192,10 @@ const demo = {
       { role: 'agent', text: 'Ask me anything — a question, a page, a file. I remember your business.' },
     ],
   },
+  // S232/FLEET-0074: instance_id -> { enabled, cadence, hour_et, last_status }
+  // for the "Run this automatically" demo-tour control — local-only, never
+  // touched by a server call (see api.listSchedules/api.setSchedule).
+  schedules: {},
 };
 
 // ---------- TecHive skin: demo dataset override (S221) ----------
@@ -553,6 +557,22 @@ const api = {
       return { ok: true, current_step: m ? m.current_step : null };
     }
     return callPlatform('update_member_step', { instance_id: instanceId, member_id: memberId, member_action: memberAction });
+  },
+  // ---- Automatic runs (S232/FLEET-0074) — the pg_cron scheduler
+  // heartbeat's member-facing control. DEMO_MODE is local-only (packet
+  // Piece 4 requirement): no server call, ever — the demo.schedules object
+  // in the "Run automatically" section below is the entire demo surface.
+  async listSchedules(instanceId) {
+    return callPlatform('list_schedules', { instance_id: instanceId });
+  },
+  async setSchedule(instanceId, scheduleTask, cadence, hourEt, enabled) {
+    return callPlatform('set_schedule', {
+      instance_id: instanceId,
+      schedule_task: scheduleTask,
+      cadence,
+      hour_et: hourEt,
+      enabled,
+    });
   },
   // ---- Settings (S225/FLEET-0069) ----
   async getSettings() {
@@ -1534,6 +1554,8 @@ function renderDetail() {
     rosterSection.classList.toggle('hidden', !isDuplicationInstance(inst));
     if (isDuplicationInstance(inst)) loadRoster(inst.id);
   }
+
+  loadScheduleControl();
 }
 
 // ---------- team roster (S232/FLEET-0073) ----------
@@ -1644,6 +1666,167 @@ async function runTeamCheck() {
   }
 }
 $('teamBtn') && $('teamBtn').addEventListener('click', runTeamCheck);
+
+// ---------- run automatically (S232/FLEET-0074) ----------
+// "Run this automatically" — on/off + cadence + hour, mirrors the sweep/
+// content/team-check buttons' visibility pattern (isTriageInstance/
+// isContentInstance/isDuplicationInstance) but drives agent_schedules via
+// list_schedules/set_schedule instead of a one-shot run. Opens the moment
+// an eligible agent's chat is showing (called from renderDetail below,
+// same "the client, when the [view] opens" pattern as loadRoster). Copy
+// rule: plain English only — never "cron", "job", "trigger", or "schedule
+// expression" (the server enforces the same rule in its own copy).
+const CADENCE_LABELS = { daily: 'Every day', weekdays: 'Weekdays', weekly: 'Once a week' };
+const HOUR_LABELS = Array.from({ length: 24 }, (_, h) => {
+  const suffix = h < 12 ? 'am' : 'pm';
+  const disp = h % 12 === 0 ? 12 : h % 12;
+  return `${disp}:00${suffix} ET`;
+});
+
+function scheduleTaskForInstance(inst) {
+  if (isTriageInstance(inst)) return 'run_triage';
+  if (isContentInstance(inst)) return 'run_content';
+  if (isDuplicationInstance(inst)) return 'run_duplication';
+  return null;
+}
+
+function populateScheduleSelectsOnce() {
+  const cadenceSel = $('scheduleCadence');
+  if (cadenceSel && !cadenceSel.dataset.populated) {
+    cadenceSel.innerHTML = Object.entries(CADENCE_LABELS)
+      .map(([v, label]) => `<option value="${v}">${escapeHtml(label)}</option>`).join('');
+    cadenceSel.dataset.populated = '1';
+  }
+  const hourSel = $('scheduleHour');
+  if (hourSel && !hourSel.dataset.populated) {
+    hourSel.innerHTML = HOUR_LABELS.map((label, h) => `<option value="${h}">${escapeHtml(label)}</option>`).join('');
+    hourSel.dataset.populated = '1';
+  }
+}
+
+// Client-side estimate for the demo tour ONLY — plain-English "next run"
+// text so the toggle feels alive without a server. The real computation
+// (DST-safe, ET wall-clock) lives in techive-platform.ts's
+// computeNextRunAt/firstOccurrenceAtOrAfter; live mode always uses the
+// server's own next_run_at (see formatNextRunEt below), never this.
+function demoNextRunText(cadence, hourEt) {
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(hourEt, 0, 0, 0);
+  if (next <= now) next.setDate(next.getDate() + 1);
+  if (cadence === 'weekdays') {
+    while (next.getDay() === 0 || next.getDay() === 6) next.setDate(next.getDate() + 1);
+  }
+  const days = Math.round((next - now) / 86400000);
+  const dayLabel = days <= 0 ? 'today' : days === 1 ? 'tomorrow' : next.toLocaleDateString([], { weekday: 'long' });
+  return `Next run: ${dayLabel} ${HOUR_LABELS[hourEt]}`;
+}
+
+function formatNextRunEt(iso) {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    const now = new Date();
+    const dayFmt = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'long' });
+    const timeFmt = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' });
+    const dayDiff = Math.round((d - now) / 86400000);
+    const dayLabel = dayDiff <= 0 ? 'today' : dayDiff === 1 ? 'tomorrow' : dayFmt.format(d);
+    return `Next run: ${dayLabel} ${timeFmt.format(d).toLowerCase().replace(' ', '')} ET`;
+  } catch {
+    return '';
+  }
+}
+
+function renderScheduleStatus(state) {
+  const statusEl = $('scheduleStatus');
+  if (!statusEl) return;
+  if (!state.enabled) {
+    statusEl.textContent = "Off — turn it on and I'll run without you clicking.";
+    return;
+  }
+  const lines = [];
+  if (state.next_run_text) lines.push(state.next_run_text);
+  if (state.last_status === 'ok') lines.push('Last run: went out clean.');
+  else if (state.last_status && state.last_status.indexOf('skipped') === 0) lines.push("Last run: skipped (nothing to do, or you were at your usage limit).");
+  else if (state.last_status && state.last_status.indexOf('error') === 0) lines.push('Last run: hit a snag — it will try again next time.');
+  statusEl.textContent = lines.join(' · ');
+}
+
+async function loadScheduleControl() {
+  const section = $('scheduleSection');
+  if (!section || !currentInstance) return;
+  const scheduleTask = scheduleTaskForInstance(currentInstance);
+  section.classList.toggle('hidden', !scheduleTask);
+  if (!scheduleTask) return;
+  populateScheduleSelectsOnce();
+
+  const toggle = $('scheduleToggle');
+  const controls = $('scheduleControls');
+  const cadenceSel = $('scheduleCadence');
+  const hourSel = $('scheduleHour');
+
+  let state = { enabled: false, cadence: 'daily', hour_et: 7, next_run_text: '', last_status: null };
+  if (DEMO_MODE) {
+    const saved = demo.schedules[currentInstance.id];
+    if (saved) state = { ...state, ...saved, next_run_text: saved.enabled ? demoNextRunText(saved.cadence, saved.hour_et) : '' };
+  } else {
+    const res = await api.listSchedules(currentInstance.id);
+    if (res && res.ok) {
+      const row = (res.schedules || []).find((s) => s.task === scheduleTask);
+      if (row) {
+        state = {
+          enabled: Boolean(row.enabled),
+          cadence: row.cadence,
+          hour_et: row.hour_et,
+          next_run_text: row.enabled ? formatNextRunEt(row.next_run_at) : '',
+          last_status: row.last_status,
+        };
+      }
+    }
+  }
+
+  toggle.checked = state.enabled;
+  cadenceSel.value = state.cadence;
+  hourSel.value = String(state.hour_et);
+  controls.classList.toggle('hidden', !state.enabled);
+  renderScheduleStatus(state);
+}
+
+async function saveSchedule() {
+  if (!currentInstance) return;
+  const scheduleTask = scheduleTaskForInstance(currentInstance);
+  if (!scheduleTask) return;
+  const enabled = $('scheduleToggle').checked;
+  const cadence = $('scheduleCadence').value;
+  const hourEt = parseInt($('scheduleHour').value, 10);
+  $('scheduleControls').classList.toggle('hidden', !enabled);
+
+  if (DEMO_MODE) {
+    const prior = demo.schedules[currentInstance.id] || {};
+    demo.schedules[currentInstance.id] = { enabled, cadence, hour_et: hourEt, last_status: prior.last_status || null };
+    renderScheduleStatus({
+      enabled,
+      last_status: prior.last_status || null,
+      next_run_text: enabled ? demoNextRunText(cadence, hourEt) : '',
+    });
+    return;
+  }
+
+  $('scheduleStatus').textContent = 'Saving…';
+  const res = await api.setSchedule(currentInstance.id, scheduleTask, cadence, hourEt, enabled);
+  if (res && res.ok) {
+    renderScheduleStatus({
+      enabled,
+      next_run_text: enabled ? formatNextRunEt(res.next_run_at) : '',
+      last_status: null,
+    });
+  } else {
+    $('scheduleStatus').textContent = (res && res.error) || 'Could not save that — try again in a moment.';
+  }
+}
+$('scheduleToggle') && $('scheduleToggle').addEventListener('change', saveSchedule);
+$('scheduleCadence') && $('scheduleCadence').addEventListener('change', saveSchedule);
+$('scheduleHour') && $('scheduleHour').addEventListener('change', saveSchedule);
 
 // ---------- usage meter (Anthropic-style: 5-hour session + weekly) ----------
 

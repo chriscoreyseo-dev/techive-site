@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <!-- ?v= cache-buster (S221): bump on every app.css/app.js/brand.js edit —
      a stale cached stylesheet rendered the org avatars unsized/huge live. -->
-<link rel="stylesheet" href="app.css?v=232.2" />
+<link rel="stylesheet" href="app.css?v=232.3" />
 <!-- PWA install (FLEET-0071, S230): TecHive-branded manifest — this app/
      directory is shared with the KitFire skin (brand.js), but the static
      manifest fields (name/theme) are TecHive's per the packet; a future
@@ -609,6 +609,24 @@
     <div id="rosterList"></div>
   </div>
 
+  <!-- ===== Run automatically (FLEET-0074, S232) — the pg_cron scheduler
+       heartbeat's member-facing control. Shown only for agents that have a
+       run rail (triage/content/duplication), same visibility pattern as
+       sweepBtn/contentBtn/teamBtn. Copy rule: plain English only — never
+       "cron", "job", "trigger", or "schedule expression". ===== -->
+  <div class="detail-section hidden" id="scheduleSection">
+    <div class="detail-label">Run automatically</div>
+    <label class="pref-row" for="scheduleToggle">
+      <input type="checkbox" id="scheduleToggle" />
+      <span>Run this automatically</span>
+    </label>
+    <div id="scheduleControls" class="schedule-controls hidden">
+      <select id="scheduleCadence" class="schedule-select"></select>
+      <select id="scheduleHour" class="schedule-select"></select>
+    </div>
+    <div id="scheduleStatus" class="schedule-status"></div>
+  </div>
+
   <div class="detail-section">
     <div class="detail-label">Recent runs</div>
     <div id="recentRuns"></div>
@@ -618,7 +636,7 @@
 <div id="scrim" class="hidden"></div>
 
 <script src="brand.js?v=232.2"></script>
-<script src="app.js?v=232.2"></script>
+<script src="app.js?v=232.3"></script>
 <!-- PWA service worker (FLEET-0071, S230): network-first passthrough only,
      no offline caching of member data (privacy over cleverness — packet
      requirement). Registration itself is independent of login/DEMO_MODE;
