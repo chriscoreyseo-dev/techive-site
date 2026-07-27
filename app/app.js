@@ -59,6 +59,14 @@ function mdToHtml(raw) {
 
 // ---------- demo data (mirrors platform_schema.sql shapes) ----------
 
+// S232/FLEET-0073: mirrors techive-platform.ts's STEP_LABELS exactly (index
+// 0 unused, 1-7 match team_members.current_step) — used only to relabel a
+// row after a local demo-mode "advance" click (see api.updateMemberStep).
+const DEMO_STEP_LABELS = [
+  '', 'Welcome', 'Profile complete', 'Capture page live', 'First post published',
+  'Follow-up chain connected', 'First-week check-in', 'Graduated',
+];
+
 const demo = {
   seat: { display_name: 'Dana (Demo)', plan: 'Starter · $99/mo founding rate', role: 'admin' },
   paused: false,
@@ -228,6 +236,24 @@ if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
       { name: 'Priya S.', status: 'inactive', month: null, children: [] },
     ],
   };
+  // Team roster (S232/FLEET-0073): the Duplication Agent's roster view demo
+  // sample — 4 people at different steps, matching the packet's DEMO_MODE
+  // requirement ("at least one stalled and one customer due a care touch").
+  // Shape mirrors techive-platform.ts's projectTeamMember output exactly
+  // (id, display_name, kind, current_step, step_label, days_on_step,
+  // last_touch_at, days_since_touch, status) so renderRoster works
+  // unchanged in both modes.
+  const daysAgoIso = (n) => new Date(Date.now() - n * 86400000).toISOString();
+  demo.teamRoster = [
+    { id: 'tm-1', display_name: 'Kayla M.', kind: 'recruit', current_step: 3, step_label: 'Capture page live',
+      days_on_step: 2, last_touch_at: null, days_since_touch: null, status: 'active' },
+    { id: 'tm-2', display_name: 'Priya S.', kind: 'recruit', current_step: 3, step_label: 'Capture page live',
+      days_on_step: 6, last_touch_at: null, days_since_touch: null, status: 'active' }, // stalled — 6 days on step 3
+    { id: 'tm-3', display_name: 'Devon R.', kind: 'recruit', current_step: 7, step_label: 'Graduated',
+      days_on_step: 45, last_touch_at: daysAgoIso(10), days_since_touch: 10, status: 'active' },
+    { id: 'tm-4', display_name: 'Tasha B.', kind: 'customer', current_step: 1, step_label: 'Welcome',
+      days_on_step: 90, last_touch_at: daysAgoIso(40), days_since_touch: 40, status: 'active' }, // care touch due — 40 days
+  ];
   demo.connections = demo.connections.map((c) =>
     c.id === 'markethive'
       ? { ...c, desc: 'Your home base — group blogs, feed, capture pages, and your leads, all wired in.', state: 'connected' }
@@ -474,6 +500,59 @@ const api = {
       };
     }
     return callPlatform('run_content', { instance_id: instanceId });
+  },
+  // ---- Team roster (S232/FLEET-0073) ----
+  // syncTeamRoster: deterministic, no model call — walks the caller's
+  // downline and returns the roster (missing rows get seeded). Called both
+  // directly (roster view opens) and internally by run_duplication.
+  async syncTeamRoster(instanceId) {
+    if (DEMO_MODE) { await wait(200); return { ok: true, roster: demo.teamRoster }; }
+    return callPlatform('sync_team_roster', { instance_id: instanceId });
+  },
+  // runDuplication: "Run my team check" — mirrors runTriage/runContent
+  // exactly (member-invoked, brief + drafts land in Approvals server-side).
+  async runDuplication(instanceId) {
+    if (DEMO_MODE) {
+      await wait(1400);
+      const time = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      const stamp = Date.now();
+      demo.approvals = [
+        ...demo.approvals,
+        { id: `ap-team-demo-${stamp}-1`, agent: 'Duplication Agent', time,
+          title: 'Nudge — Priya S.',
+          preview: "Hey Priya! Noticed you're still on getting your capture page live — that's the one thing standing between you and your first lead. Want a hand setting it up?" },
+        { id: `ap-team-demo-${stamp}-2`, agent: 'Duplication Agent', time,
+          title: 'Care touch — Tasha B.',
+          preview: "Hi Tasha — checking in, it's been a bit! How's everything going on your end, anything in the way I can help clear?" },
+      ];
+      return {
+        ok: true,
+        output: 'Team check done (demo) — checked 4 team members. 1 nudge (stalled on capture page 6 days) and 1 care touch ' +
+          "(a customer who hasn't been checked on in 40 days) are drafted and waiting in **Approvals**.\n\n---\nOn a live account, " +
+          "stall and care-due thresholds are computed in code from your real roster — nothing here is real yet.",
+        drafts_queued: 2,
+      };
+    }
+    return callPlatform('run_duplication', { instance_id: instanceId });
+  },
+  // updateMemberStep: "advance" (moves current_step forward one) or
+  // "log_touch" (stamps last_touch_at) — the roster view's per-row controls.
+  async updateMemberStep(instanceId, memberId, memberAction) {
+    if (DEMO_MODE) {
+      await wait(200);
+      const m = demo.teamRoster.find((x) => x.id === memberId);
+      if (m) {
+        if (memberAction === 'advance' && m.current_step < 7) {
+          m.current_step += 1;
+          m.step_label = DEMO_STEP_LABELS[m.current_step] || '';
+          m.days_on_step = 0;
+        } else if (memberAction === 'log_touch') {
+          m.days_since_touch = 0;
+        }
+      }
+      return { ok: true, current_step: m ? m.current_step : null };
+    }
+    return callPlatform('update_member_step', { instance_id: instanceId, member_id: memberId, member_action: memberAction });
   },
   // ---- Settings (S225/FLEET-0069) ----
   async getSettings() {
@@ -1001,6 +1080,14 @@ function isContentInstance(inst) {
   return Boolean(inst) && inst.catalog_id === 'content_engine';
 }
 
+// S232/FLEET-0073: the "Run my team check" affordance + roster panel only
+// make sense for the Duplication Agent (catalog_id 'team_builder' — real
+// server value in live mode, same id in the TecHive demo dataset; mirrors
+// isTriageInstance/isContentInstance above).
+function isDuplicationInstance(inst) {
+  return Boolean(inst) && inst.catalog_id === 'team_builder';
+}
+
 function renderChat() {
   if (!currentInstance) return; // live account, no agents spawned yet
   $('chatAgentName').textContent = currentInstance.name;
@@ -1010,6 +1097,8 @@ function renderChat() {
   if (sweepBtn) sweepBtn.classList.toggle('hidden', !isTriageInstance(currentInstance));
   const contentBtn = $('contentBtn');
   if (contentBtn) contentBtn.classList.toggle('hidden', !isContentInstance(currentInstance));
+  const teamBtn = $('teamBtn');
+  if (teamBtn) teamBtn.classList.toggle('hidden', !isDuplicationInstance(currentInstance));
   $('thread').innerHTML = '';
   // Canvas greeting (Chris ruling S219: personalize the work, not the chrome —
   // the name lives in the first thing the agent says, not next to the brand).
@@ -1439,7 +1528,122 @@ function renderDetail() {
     row.innerHTML = `<div class="run-when">${escapeHtml(r.when)}</div><div class="run-what">${escapeHtml(r.what)}</div>`;
     runs.appendChild(row);
   }
+
+  const rosterSection = $('rosterSection');
+  if (rosterSection) {
+    rosterSection.classList.toggle('hidden', !isDuplicationInstance(inst));
+    if (isDuplicationInstance(inst)) loadRoster(inst.id);
+  }
 }
+
+// ---------- team roster (S232/FLEET-0073) ----------
+// "the client, when the roster view opens" (packet) — the roster panel is
+// part of the detail rail, so it opens the moment the Duplication Agent's
+// chat is showing (renderDetail above). DEMO_MODE never calls the server
+// (api.syncTeamRoster returns the local sample directly); live mode syncs
+// against the real downline every time this panel is shown.
+async function loadRoster(instanceId) {
+  const res = await api.syncTeamRoster(instanceId);
+  if (res && res.ok) renderRoster(res.roster || []);
+}
+
+function renderRoster(roster) {
+  const list = $('rosterList');
+  if (!list) return;
+  list.innerHTML = '';
+  if (!roster.length) {
+    list.innerHTML = '<div class="run-row"><div class="run-what">Nobody on the roster yet.</div></div>';
+    return;
+  }
+  for (const m of roster) {
+    const row = document.createElement('div');
+    row.className = 'roster-row';
+    const kindLabel = m.kind === 'customer' ? 'Customer' : 'Recruit';
+    const stepLine = m.kind === 'customer'
+      ? kindLabel
+      : `${kindLabel} · step ${m.current_step} — ${escapeHtml(m.step_label || '')}`;
+    const touchLine = m.days_since_touch === null
+      ? 'never touched'
+      : `touched ${m.days_since_touch}d ago`;
+    row.innerHTML = `
+      <div class="roster-row-head">
+        <span class="roster-name">${escapeHtml(m.display_name)}</span>
+        <span class="roster-meta">${stepLine} &middot; ${m.days_on_step}d on step &middot; ${touchLine}</span>
+      </div>
+      <div class="roster-row-actions">
+        ${m.current_step < 7 ? `<button class="btn-ghost roster-btn" data-member="${m.id}" data-action="advance">Advance step</button>` : ''}
+        <button class="btn-ghost roster-btn" data-member="${m.id}" data-action="log_touch">Log touch</button>
+      </div>`;
+    list.appendChild(row);
+  }
+  list.querySelectorAll('.roster-btn').forEach((b) => b.addEventListener('click', async () => {
+    if (!currentInstance) return;
+    b.disabled = true;
+    const res = await api.updateMemberStep(currentInstance.id, b.dataset.member, b.dataset.action);
+    b.disabled = false;
+    if (res && res.ok) {
+      if (DEMO_MODE) {
+        renderRoster(demo.teamRoster);
+      } else {
+        loadRoster(currentInstance.id);
+      }
+    }
+  }));
+}
+
+// "Run my team check" — mirrors runTriageSweep/runContentDraft exactly
+// (chat-turn appendMsg/typing pattern, calls run_duplication, resyncs
+// approvals/activity/recent-runs + the roster panel since a run can queue
+// drafts, write activity, and advance nothing on its own — steps only move
+// on an explicit update_member_step click). Degrades gracefully: until
+// techive-platform is redeployed with run_duplication, the server's
+// isTask() gate rejects it as an unknown task — same calm "isn't live yet"
+// fallback as the sweep/content buttons (S225 honesty rule).
+async function runTeamCheck() {
+  if (!currentInstance) return;
+  const btn = $('teamBtn');
+  if (btn) btn.disabled = true;
+  appendMsg('user', 'Run my team check');
+  (demo.chat[currentInstance.id] = demo.chat[currentInstance.id] || []).push({ role: 'user', text: 'Run my team check' });
+
+  const typing = appendMsg('agent', '<div class="typing"><span></span><span></span><span></span></div>');
+  const res = await api.runDuplication(currentInstance.id);
+  let displayText;
+  if (res && res.ok) {
+    displayText = res.output;
+  } else if (res && typeof res.error === 'string' && /unknown task/i.test(res.error)) {
+    displayText = "**Team check isn't live yet** — check back soon.";
+  } else {
+    displayText = '**Hmm.** ' + ((res && res.error) || 'Something went wrong — try again.');
+  }
+  typing.querySelector('.msg-body').innerHTML = mdToHtml(displayText);
+  demo.chat[currentInstance.id].push({ role: 'agent', text: displayText });
+  $('thread').scrollTop = $('thread').scrollHeight;
+  if (btn) btn.disabled = false;
+
+  if (res && res.ok) {
+    if (DEMO_MODE) {
+      renderNav();
+      if (currentView === 'approvals') renderApprovals();
+    } else {
+      const [apprRes, actRes, instRes] = await Promise.all([
+        callPlatform('list_approvals', {}),
+        callPlatform('list_activity', {}),
+        callPlatform('list_instances', {}),
+      ]);
+      if (apprRes && apprRes.ok) { demo.approvals = apprRes.approvals; renderNav(); if (currentView === 'approvals') renderApprovals(); }
+      if (actRes && actRes.ok) { demo.activity = actRes.activity; if (currentView === 'activity') renderActivity(); }
+      if (instRes && instRes.ok && instRes.instances.length) {
+        const keepId = currentInstance && currentInstance.id;
+        demo.instances = instRes.instances;
+        currentInstance = demo.instances.find((i) => i.id === keepId) || demo.instances[0];
+        renderDetail();
+      }
+      loadRoster(currentInstance.id);
+    }
+  }
+}
+$('teamBtn') && $('teamBtn').addEventListener('click', runTeamCheck);
 
 // ---------- usage meter (Anthropic-style: 5-hour session + weekly) ----------
 

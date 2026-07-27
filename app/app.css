@@ -630,6 +630,15 @@ body {
 .run-when { color: var(--text-faint); font-size: 11px; }
 .run-what { color: var(--text-dim); margin-top: 2px; line-height: 1.45; }
 
+/* ---- team roster (S232/FLEET-0073) ---- */
+.roster-row { padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+.roster-row:last-child { border-bottom: none; }
+.roster-row-head { display: flex; flex-direction: column; gap: 2px; }
+.roster-name { font-weight: 600; color: var(--text); }
+.roster-meta { color: var(--text-faint); font-size: 11px; line-height: 1.5; }
+.roster-row-actions { display: flex; gap: 6px; margin-top: 6px; }
+.roster-btn { padding: 4px 10px; font-size: 11px; }
+
 /* ---- chat canvas greeting ---- */
 .greeting {
   font-family: var(--font-brand); font-size: 17px; font-weight: 600;
