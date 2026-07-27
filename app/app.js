@@ -1567,7 +1567,11 @@ function renderBilling() {
   const upBtn = $('billingUpgradeBtn');
   if (upBtn) upBtn.addEventListener('click', () => showView('catalog'));
 
-  $('seatCount').textContent = `${demo.teamSeats.length} of ${demo.seat.plan.startsWith('Full') ? 3 : 2} included`;
+  // TecHive: one seat, no adds (S232) — KitFire keeps Starter 2 / FW 3.
+  const seatsIncluded = window.KF_BRAND && window.KF_BRAND.key === 'techive'
+    ? 1
+    : (demo.seat.plan.startsWith('Full') ? 3 : 2);
+  $('seatCount').textContent = `${demo.teamSeats.length} of ${seatsIncluded} included`;
   const list = $('seatList');
   list.innerHTML = '';
   for (const s of demo.teamSeats) {

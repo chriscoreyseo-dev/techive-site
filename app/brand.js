@@ -98,7 +98,7 @@
       set('.price-note', 'Every TecHive agent · the referral program built in');
       const bullets = [
         'All six TecHive agents — Follow-Up through Duplication',
-        '1 seat included · extra seats $25/mo',
+        '1 seat — the whole workforce works for you',
         'Full trust ladder: graduate any action to auto',
         'Referral dashboard: your link, your three levels, your ledger',
       ];
@@ -109,6 +109,19 @@
       if (up) {
         up.outerHTML = '<span class="price-current-tag">&#10003; Your plan</span>';
       }
+    }
+
+    // Seats: TecHive is $299/mo for ONE seat, period — the $25/mo extra
+    // seat is strictly KitFire-for-businesses (Chris ruling S232). Kill the
+    // add-seat rail and the extra-seat tank copy on this skin.
+    const addSeat = document.getElementById('addSeatBtn');
+    if (addSeat) addSeat.style.display = 'none';
+    const roleHint = document.querySelector('.role-hint');
+    if (roleHint) roleHint.textContent = 'Only admins can change billing.';
+    const priceFoot = document.querySelector('.price-foot');
+    if (priceFoot) {
+      priceFoot.textContent =
+        'Your founding rate locks for as long as you stay subscribed. TecHive never moves money or holds your credentials — at any tier.';
     }
 
     const refer = document.getElementById('referLink');
