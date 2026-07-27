@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <!-- ?v= cache-buster (S221): bump on every app.css/app.js/brand.js edit —
      a stale cached stylesheet rendered the org avatars unsized/huge live. -->
-<link rel="stylesheet" href="app.css?v=230.3" />
+<link rel="stylesheet" href="app.css?v=232.1" />
 <!-- PWA install (FLEET-0071, S230): TecHive-branded manifest — this app/
      directory is shared with the KitFire skin (brand.js), but the static
      manifest fields (name/theme) are TecHive's per the packet; a future
@@ -273,6 +273,7 @@
       <div class="chat-header-actions">
         <span id="tierChip" class="tier-chip"></span>
         <button id="sweepBtn" class="btn-ghost hidden">Run my morning sweep</button>
+        <button id="contentBtn" class="btn-ghost hidden">Draft today's content</button>
         <button id="voiceBtn" class="btn-ghost">My voice</button>
         <button id="customizeBtn" class="btn-ghost">Customize</button>
       </div>
@@ -610,8 +611,8 @@
 
 <div id="scrim" class="hidden"></div>
 
-<script src="brand.js?v=230.3"></script>
-<script src="app.js?v=230.3"></script>
+<script src="brand.js?v=232.1"></script>
+<script src="app.js?v=232.1"></script>
 <!-- PWA service worker (FLEET-0071, S230): network-first passthrough only,
      no offline caching of member data (privacy over cleverness — packet
      requirement). Registration itself is independent of login/DEMO_MODE;

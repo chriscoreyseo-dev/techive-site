@@ -446,6 +446,35 @@ const api = {
     }
     return callPlatform('run_triage', { instance_id: instanceId });
   },
+  // ---- Content Agent daily draft run (S232/FLEET-0072) ----
+  // DEMO_MODE is a local-only sample (packet requirement): no server call —
+  // pushes a brief + 2 sample drafts straight into demo.approvals, matching
+  // the demo tour's existing texture (see demo.approvals' Content Agent
+  // sample row above). Live mode calls the server exactly like runTriage.
+  async runContent(instanceId) {
+    if (DEMO_MODE) {
+      await wait(1400);
+      const time = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      const stamp = Date.now();
+      demo.approvals = [
+        ...demo.approvals,
+        { id: `ap-content-demo-${stamp}-1`, agent: 'Content Agent', time,
+          title: 'Post — the system works while you sleep',
+          preview: 'Woke up to three conversations my follow-up system started while I was asleep. Not magic — just a system that never forgets anyone. DM me "SYSTEM" if you want to see how it runs.' },
+        { id: `ap-content-demo-${stamp}-2`, agent: 'Content Agent', time,
+          title: 'Blog — What actually changes when follow-up never stops',
+          preview: 'Most deals are lost to silence, not rejection. Here is what changed once every prospect got a real follow-up cadence instead of two tries and a shrug…' },
+      ];
+      return {
+        ok: true,
+        output: "Today's content is drafted (demo) — 3 posts across distinct angles (value, story, engagement) plus a short blog draft, " +
+          'in your voice. 2 samples are waiting in **Approvals** for the tour; on a live account all 4 land there.\n\n---\n' +
+          "On a live account, this is grounded only in your agent's goal, doctrine, and your voice profile — never invented product facts, and nothing here is real yet.",
+        drafts_queued: 2,
+      };
+    }
+    return callPlatform('run_content', { instance_id: instanceId });
+  },
   // ---- Settings (S225/FLEET-0069) ----
   async getSettings() {
     if (DEMO_MODE) {
@@ -964,6 +993,14 @@ function isTriageInstance(inst) {
   return Boolean(inst) && inst.catalog_id === 'inbox_triage';
 }
 
+// S232/FLEET-0072: the "Draft today's content" affordance only makes sense
+// for the Content Agent (catalog_id 'content_engine' — real server value in
+// live mode, same id in the TecHive demo dataset, so this check works
+// unchanged in both modes; mirrors isTriageInstance above).
+function isContentInstance(inst) {
+  return Boolean(inst) && inst.catalog_id === 'content_engine';
+}
+
 function renderChat() {
   if (!currentInstance) return; // live account, no agents spawned yet
   $('chatAgentName').textContent = currentInstance.name;
@@ -971,6 +1008,8 @@ function renderChat() {
   $('tierChip').textContent = tierLabel(currentInstance);
   const sweepBtn = $('sweepBtn');
   if (sweepBtn) sweepBtn.classList.toggle('hidden', !isTriageInstance(currentInstance));
+  const contentBtn = $('contentBtn');
+  if (contentBtn) contentBtn.classList.toggle('hidden', !isContentInstance(currentInstance));
   $('thread').innerHTML = '';
   // Canvas greeting (Chris ruling S219: personalize the work, not the chrome —
   // the name lives in the first thing the agent says, not next to the brand).
@@ -1072,6 +1111,68 @@ async function runTriageSweep() {
   }
 }
 $('sweepBtn') && $('sweepBtn').addEventListener('click', runTriageSweep);
+
+// ---------- content draft run (S232/FLEET-0072) ----------
+// "Draft today's content" reads like a chat turn (same appendMsg/typing
+// pattern as sendMessage/runTriageSweep above) but calls run_content
+// instead, then resyncs approvals/activity/recent-runs since a run can
+// queue drafts and write a run record server-side. v1: no topic UI — the
+// button always runs topicless; a member can type a topic to the agent in
+// chat instead. Degrades gracefully: until techive-platform is redeployed
+// with run_content, the server's isTask() gate rejects it as an unknown
+// task — shown here as the same calm "isn't live yet" note as the sweep
+// button (S225 honesty rule, same posture as the connector rail's
+// pre-deploy fallback).
+async function runContentDraft() {
+  if (!currentInstance) return;
+  const btn = $('contentBtn');
+  if (btn) btn.disabled = true;
+  appendMsg('user', "Draft today's content");
+  (demo.chat[currentInstance.id] = demo.chat[currentInstance.id] || []).push({ role: 'user', text: "Draft today's content" });
+
+  const typing = appendMsg('agent', '<div class="typing"><span></span><span></span><span></span></div>');
+  const res = await api.runContent(currentInstance.id);
+  let displayText;
+  if (res && res.ok) {
+    displayText = res.output;
+  } else if (res && typeof res.error === 'string' && /unknown task/i.test(res.error)) {
+    displayText = "**Today's content run isn't live yet** — check back soon.";
+  } else {
+    displayText = '**Hmm.** ' + ((res && res.error) || 'Something went wrong — try again.');
+  }
+  typing.querySelector('.msg-body').innerHTML = mdToHtml(displayText);
+  demo.chat[currentInstance.id].push({ role: 'agent', text: displayText });
+  $('thread').scrollTop = $('thread').scrollHeight;
+  if (btn) btn.disabled = false;
+
+  if (res && res.ok) {
+    if (DEMO_MODE) {
+      // api.runContent already pushed the local sample drafts into
+      // demo.approvals directly (packet: local-only sample, no server
+      // call) — just re-render off the already-updated demo state.
+      renderNav();
+      if (currentView === 'approvals') renderApprovals();
+    } else {
+      // Server truth resync — a run can queue approvals, write activity,
+      // and add a loop_runs row for "Recent runs" (same pattern as
+      // runTriageSweep's resync above).
+      const [apprRes, actRes, instRes] = await Promise.all([
+        callPlatform('list_approvals', {}),
+        callPlatform('list_activity', {}),
+        callPlatform('list_instances', {}),
+      ]);
+      if (apprRes && apprRes.ok) { demo.approvals = apprRes.approvals; renderNav(); if (currentView === 'approvals') renderApprovals(); }
+      if (actRes && actRes.ok) { demo.activity = actRes.activity; if (currentView === 'activity') renderActivity(); }
+      if (instRes && instRes.ok && instRes.instances.length) {
+        const keepId = currentInstance && currentInstance.id;
+        demo.instances = instRes.instances;
+        currentInstance = demo.instances.find((i) => i.id === keepId) || demo.instances[0];
+        renderDetail();
+      }
+    }
+  }
+}
+$('contentBtn') && $('contentBtn').addEventListener('click', runContentDraft);
 
 // ---------- catalog ----------
 
