@@ -193,7 +193,7 @@ const demo = {
 // Chaser ruled out). Income-claims law holds in demo copy too: activity
 // shows WORK (touches, drafts, onboards) — never a dollar earned.
 if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
-  demo.seat = { display_name: 'Marcus (Demo)', plan: 'TecHive · $299/mo founding rate', role: 'admin' };
+  demo.seat = { display_name: 'Marcus (Demo)', plan: 'Duplicator Pro · $299/mo founding rate', role: 'admin' };
   demo.teamSeats = [{ name: 'Marcus (Demo)', role: 'admin' }];
   demo.referral = { link: 'techive.ai/start?ref=demo-marcus', earnings: '119.60', count: 5 };
   demo.settings = { email: 'marcus@yourbusiness.com', voice_profile_on_file: true, email_pings_enabled: true };
@@ -547,9 +547,18 @@ async function callPlatform(task, payload) {
 
 const PLAN_RATES = {
   'TecHive': '$299/mo founding rate',
+  'Duplicator Pro': '$299/mo founding rate',
   'Starter': '$99/mo founding rate',
   'Full Workforce': '$299/mo founding rate',
 };
+
+// TecHive sells exactly ONE plan — Duplicator Pro, $299/mo (Chris ruling
+// S232; there is no $99 starter on this skin). The server still labels the
+// stubbed plan "Starter" (resolveClientPlan gap), so every plan label the
+// TecHive skin renders normalizes here regardless of what the fn returns.
+function brandPlanLabel(plan) {
+  return window.KF_BRAND && window.KF_BRAND.key === 'techive' ? 'Duplicator Pro' : plan;
+}
 
 async function loadLiveState() {
   // Campaigns (FLEET-0070/S230): resolve the active campaign BEFORE the
@@ -584,9 +593,10 @@ async function loadLiveState() {
   if (usage && usage.ok) {
     demo.usage = usage.usage;
     const seatName = (usage.seat && usage.seat.name) || 'Member';
+    const planLabel = brandPlanLabel(usage.plan);
     demo.seat = {
       display_name: seatName,
-      plan: usage.plan + ' · ' + (PLAN_RATES[usage.plan] || 'founding rate'),
+      plan: planLabel + ' · ' + (PLAN_RATES[planLabel] || 'founding rate'),
       role: (usage.seat && usage.seat.role) || 'member',
     };
     demo.teamSeats = [{ name: seatName, role: demo.seat.role }];
@@ -1548,9 +1558,14 @@ function renderBilling() {
     <div class="plan-line"><span>Plan</span><b>${escapeHtml(planName)}</b></div>
     <div class="plan-line"><span>Rate</span><b>${escapeHtml(demo.seat.plan.split(' · ')[1] || '')}</b></div>
     <div class="plan-line"><span>Renews</span><b>${DEMO_MODE ? 'Aug 1, 2026' : 'Monthly · managed in Stripe'}</b></div>
-    <div class="plan-line"><span>Usage this week</span><b>${demo.usage.week.pct}% of tank</b></div>
-    <button class="btn-primary" id="billingUpgradeBtn" style="margin-top:10px">See Full Workforce</button>`;
-  $('billingUpgradeBtn').addEventListener('click', () => showView('catalog'));
+    <div class="plan-line"><span>Usage this week</span><b>${demo.usage.week.pct}% of tank</b></div>${
+    // TecHive: one plan, Duplicator Pro — there is no Full Workforce to
+    // upgrade to (S232), so the upgrade CTA is KitFire-skin only.
+    window.KF_BRAND && window.KF_BRAND.key === 'techive'
+      ? ''
+      : '<button class="btn-primary" id="billingUpgradeBtn" style="margin-top:10px">See Full Workforce</button>'}`;
+  const upBtn = $('billingUpgradeBtn');
+  if (upBtn) upBtn.addEventListener('click', () => showView('catalog'));
 
   $('seatCount').textContent = `${demo.teamSeats.length} of ${demo.seat.plan.startsWith('Full') ? 3 : 2} included`;
   const list = $('seatList');
@@ -1936,7 +1951,7 @@ async function renderSettings() {
     const s = res.settings;
     $('settingsNameInput').value = s.display_name || demo.seat.display_name;
     $('settingsEmail').textContent = s.email || '—';
-    $('settingsPlan').textContent = s.plan || demo.seat.plan.split(' · ')[0];
+    $('settingsPlan').textContent = s.plan ? brandPlanLabel(s.plan) : demo.seat.plan.split(' · ')[0];
     $('rotateCodeBtn').classList.toggle('hidden', s.role !== 'admin');
     $('rotateCodeMemberNote').classList.toggle('hidden', s.role === 'admin');
     $('settingsVoiceStatus').textContent = s.voice_profile_on_file

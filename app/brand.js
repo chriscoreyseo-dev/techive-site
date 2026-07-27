@@ -74,8 +74,17 @@
     if (kit) kit.textContent = window.KF_BRAND.wordmark[0];
     if (fire) fire.textContent = window.KF_BRAND.wordmark[1];
 
+    // Pre-boot placeholders ship "Starter" (the KitFire base skin) — on
+    // TecHive there is no Starter, ever (S232: one plan, Duplicator Pro
+    // $299/mo). Overwrite before live data lands so the label never
+    // flashes wrong.
+    const seatPlanEl = document.getElementById('seatPlan');
+    if (seatPlanEl) seatPlanEl.textContent = 'Duplicator Pro · $299/mo founding rate';
+    const usagePlanEl = document.getElementById('usagePlanTag');
+    if (usagePlanEl) usagePlanEl.textContent = 'Duplicator Pro';
+
     // Pricing panel: TecHive is ONE plan — hide Starter, re-letter the
-    // featured card as the customer's own TecHive plan.
+    // featured card as the customer's own Duplicator Pro plan.
     const starter = document.querySelector('.price-card.current');
     const featured = document.querySelector('.price-card.featured');
     if (starter) starter.style.display = 'none';
@@ -84,7 +93,7 @@
         const el = featured.querySelector(sel);
         if (el) el.textContent = text;
       };
-      set('.price-tier', 'TecHive');
+      set('.price-tier', 'Duplicator Pro');
       set('.price-flag', 'Founding rate');
       set('.price-note', 'Every TecHive agent · the referral program built in');
       const bullets = [
