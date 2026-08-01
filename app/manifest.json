@@ -1,12 +1,12 @@
 {
-  "name": "TecHive",
-  "short_name": "TecHive",
-  "description": "Approve your agents' drafts from anywhere — TecHive back office.",
+  "name": "KitCrew",
+  "short_name": "KitCrew",
+  "description": "Approve your crew's drafts from anywhere — KitCrew back office, by KitFire.",
   "start_url": "/app/?view=approvals",
   "scope": "/app/",
   "display": "standalone",
-  "background_color": "#0b0e14",
-  "theme_color": "#f59e0b",
+  "background_color": "#0a0e16",
+  "theme_color": "#22d3c7",
   "orientation": "portrait-primary",
   "icons": [
     {

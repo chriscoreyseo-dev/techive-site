@@ -207,7 +207,7 @@ const demo = {
 if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
   demo.seat = { display_name: 'Marcus (Demo)', plan: 'Duplicator Pro · $299/mo founding rate', role: 'admin' };
   demo.teamSeats = [{ name: 'Marcus (Demo)', role: 'admin' }];
-  demo.referral = { link: 'techive.ai/start?ref=demo-marcus', earnings: '119.60', count: 5 };
+  demo.referral = { link: 'kitcrew.ai/start?ref=demo-marcus', earnings: '119.60', count: 5 };
   demo.settings = { email: 'marcus@yourbusiness.com', voice_profile_on_file: true, email_pings_enabled: true };
   // Demo org chart — the customer-visible projection of affiliate_profiles
   // (genealogy) + commission_ledger (money). Production: the
@@ -362,7 +362,7 @@ if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
         { when: 'Today 6:00am', what: 'Scanned 27 messages · 2 prospect replies surfaced · 1 company notice flagged' },
         { when: 'Yesterday 6:00am', what: 'Scanned 31 messages · quiet day, nothing urgent' },
       ] },
-    { id: 'inst-ask', catalog_id: 'ask', campaign_id: null, name: 'Ask TecHive', dept: 'General', tier: 1,
+    { id: 'inst-ask', catalog_id: 'ask', campaign_id: null, name: 'Ask KitCrew', dept: 'General', tier: 1,
       mission: 'General-purpose help: questions, page reads, file summaries, business memory.',
       actions: [{ key: 'answer', name: 'Answer questions', state: 'auto' }],
       streak: null,

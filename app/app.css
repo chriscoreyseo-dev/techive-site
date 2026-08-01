@@ -890,3 +890,90 @@ html:not([data-brand="techive"]) .techive-only { display: none; }
   .spawn-card { margin: 16px; padding: 18px; }
   .chat-header-actions .btn-ghost { display: none; }
 }
+
+/* ============ KITCREW SKIN (S246) ============
+   Scoped to [data-skin="kitcrew"] (set by brand.js on the lane hostnames).
+   The kitcrew.ai site system carried into the back office: teal #22d3c7 →
+   indigo #6366f1 gradients, same bg family, same mark. The base --ember
+   vars are already remapped to teal by brand.js; this block adds the
+   gradient/glow layer single-color vars can't express. */
+
+[data-skin="kitcrew"] body,
+html[data-skin="kitcrew"] {
+  --bg: #0a0e16;
+  --ink: #0a0e16;
+  --bg-raise: #121826;
+  --bg-raise-2: #1a2233;
+}
+
+[data-skin="kitcrew"] .brand { gap: 9px; align-items: center; }
+[data-skin="kitcrew"] .kc-mark { width: 26px; height: 26px; flex-shrink: 0; }
+[data-skin="kitcrew"] .brand-kit,
+[data-skin="kitcrew"] .brand-fire { color: var(--text); }
+[data-skin="kitcrew"] .kc-by {
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--text-faint);
+  margin-left: 6px;
+  letter-spacing: 0.2px;
+  align-self: center;
+}
+
+/* Gradient primaries — the site's button language */
+[data-skin="kitcrew"] .btn-primary,
+[data-skin="kitcrew"] #sendBtn {
+  background: linear-gradient(90deg, #22d3c7, var(--kc-indigo, #6366f1));
+  color: #060810;
+  border: none;
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+[data-skin="kitcrew"] .btn-primary:hover,
+[data-skin="kitcrew"] #sendBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 9px 26px rgba(99, 102, 241, 0.45);
+}
+
+/* Usage meters + health pulse in the gradient */
+[data-skin="kitcrew"] .u-fill {
+  background: linear-gradient(90deg, #22d3c7, var(--kc-indigo, #6366f1));
+}
+[data-skin="kitcrew"] .brand-dot,
+[data-skin="kitcrew"] .health-dot {
+  background: #22d3c7;
+  box-shadow: 0 0 8px rgba(34, 211, 199, 0.7);
+}
+
+/* Badges / flags pick up indigo so teal keeps signal for state */
+[data-skin="kitcrew"] .badge,
+[data-skin="kitcrew"] .price-flag {
+  background: var(--kc-indigo, #6366f1);
+  color: #fff;
+}
+
+/* Featured price card + current-plan tag */
+[data-skin="kitcrew"] .price-card.featured { border-color: rgba(99, 102, 241, 0.4); }
+[data-skin="kitcrew"] .price-current-tag { color: #22d3c7; }
+
+/* Focus rings in brand teal */
+[data-skin="kitcrew"] textarea:focus,
+[data-skin="kitcrew"] input:focus {
+  outline: none;
+  border-color: rgba(34, 211, 199, 0.55);
+  box-shadow: 0 0 0 3px rgba(34, 211, 199, 0.12);
+}
+
+/* Subtle ambient depth behind the main column, echoing the site's orbs */
+[data-skin="kitcrew"] #main {
+  background:
+    radial-gradient(560px 300px at 12% -8%, rgba(34, 211, 199, 0.05), transparent 60%),
+    radial-gradient(640px 340px at 95% 0%, rgba(99, 102, 241, 0.06), transparent 60%),
+    var(--bg);
+}
+
+/* Wordmark spacing fix (S246): flex gap on .brand separated the Kit/Crew
+   spans — mark spacing comes from the mark's own margin instead. */
+[data-skin="kitcrew"] .brand { gap: 0; }
+[data-skin="kitcrew"] .kc-mark { margin-right: 9px; }
+[data-skin="kitcrew"] .brand-dot { margin-left: 8px; }
