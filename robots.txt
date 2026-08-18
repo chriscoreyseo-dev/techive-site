@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /$
+Allow: /assets/
+
+# Member back office — a logged-in application surface, not content.
+# Nothing here belongs in an index.
+Disallow: /app/
+
+Sitemap: https://itsgreatbusiness.com/sitemap.xml
