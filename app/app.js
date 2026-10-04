@@ -20,8 +20,8 @@
 // soon" fallback either way, never an error splash. See
 // product/techive/CONNECTOR_RUNBOOK.md for the operator deploy steps.
 
-const ACCESS_CODE = sessionStorage.getItem('kf_access_code') || '';
-const DEMO_MODE = !ACCESS_CODE;
+const DEMO_MODE = new URLSearchParams(location.search).get('demo') === '1';
+const ACCESS_CODE = DEMO_MODE ? '' : (sessionStorage.getItem('kf_access_code') || '');
 // S225 separation ruling (Chris): TecHive and KitFire are separate
 // companies — this app talks to techive-platform, TecHive's own fn.
 const PLATFORM_ENDPOINT = 'https://obwjlqrzshdglrccsbtl.supabase.co/functions/v1/techive-platform';
@@ -78,13 +78,13 @@ const demo = {
     { id: 'outlook', cat: 'Inbox & comms', ico: '&#9993;', name: 'Outlook', desc: 'Inbox + calendar in one connector.', state: 'available' },
     { id: 'slack', cat: 'Inbox & comms', ico: '&#128172;', name: 'Slack', desc: 'Team chatter becomes team memory — decisions get caught, not lost.', state: 'available' },
     { id: 'phone', cat: 'Inbox & comms', ico: '&#9742;', name: 'Business phone', desc: 'Voicemail transcripts and missed-call follow-ups flow into triage.', state: 'available' },
-    { id: 'quickbooks', cat: 'Money', ico: '&#128202;', name: 'QuickBooks', desc: 'Your Invoice Chaser knows what an aging report is on day one.', state: 'available' },
+    { id: 'quickbooks', cat: 'Money', ico: '&#128202;', name: 'QuickBooks', desc: 'Financial records for your inbox summaries, when connected.', state: 'available' },
     { id: 'stripe', cat: 'Money', ico: '&#128179;', name: 'Stripe', desc: 'Payments, disputes, and failed charges — flagged before they fester.', state: 'available' },
     { id: 'square', cat: 'Money', ico: '&#128179;', name: 'Square', desc: 'Sales trends and slow days, read daily.', state: 'available' },
     { id: 'paypal', cat: 'Money', ico: '&#128179;', name: 'PayPal', desc: 'Disputes and payouts in the morning brief.', state: 'available' },
     { id: 'hubspot', cat: 'Customers & reviews', ico: '&#129309;', name: 'HubSpot', desc: 'Your Sales Follow-Up Agent works the pipeline you already have.', state: 'available' },
     { id: 'salesforce', cat: 'Customers & reviews', ico: '&#9729;', name: 'Salesforce', desc: 'Your pipeline, worked daily — stale deals nudged, call sheets prepped.', state: 'available' },
-    { id: 'gbp', cat: 'Customers & reviews', ico: '&#11088;', name: 'Google Business Profile', desc: 'New reviews answered in your voice, flagged when they need you.', state: 'available' },
+    { id: 'gbp', cat: 'Customers & reviews', ico: '&#11088;', name: 'Google Business Profile', desc: 'New reviews answered in your writing style, flagged when they need you.', state: 'available' },
     { id: 'gcal', cat: 'Schedule', ico: '&#128197;', name: 'Google Calendar', desc: '"Prep me before this call" needs eyes on your week.', state: 'available' },
     { id: 'shopify', cat: 'Store & site', ico: '&#128722;', name: 'Shopify', desc: 'Orders, stock-outs, and abandoned carts — watched.', state: 'available' },
     { id: 'forms', cat: 'Store & site', ico: '&#128203;', name: 'Website forms', desc: 'New leads from your site land with your agents the second they arrive.', state: 'connected' },
@@ -145,7 +145,7 @@ const demo = {
     { id: 'reviews', name: 'Review & Reputation Agent', dept: 'Marketing', owned: false,
       pitch: 'Watches your reviews and mentions everywhere. Drafts the right response and flags the fires early.', price: 'Full Workforce' },
     { id: 'content', name: 'Content Agent', dept: 'Marketing', owned: false,
-      pitch: 'Keeps your blog and socials alive in your voice — on a schedule, without you thinking about it.', price: 'Full Workforce' },
+      pitch: 'Keeps your blog and socials alive in your writing style — on a schedule, without you thinking about it.', price: 'Full Workforce' },
     { id: 'scheduler', name: 'Scheduling Agent', dept: 'Ops · Calendar', owned: false,
       pitch: 'Handles the back-and-forth of booking. Protects your focus time like a bouncer.', price: 'Full Workforce' },
   ],
@@ -267,7 +267,7 @@ if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
     { id: 'followup_engine', name: 'Follow-Up Agent', dept: 'Sales', owned: true,
       pitch: 'Every prospect followed up until they decide — 7 touches, not 2. Drafted for your approval, never pushy, never forgets a name.', price: 'Included' },
     { id: 'content_engine', name: 'Content Agent', dept: 'Marketing', owned: true,
-      pitch: 'Daily posts and blogs in YOUR voice — written, imaged, ready to approve. Three hours of content work becomes three minutes.', price: 'Included' },
+      pitch: 'Daily posts and blogs in your writing style — written, imaged, ready to approve. Three hours of content work becomes three minutes.', price: 'Included' },
     { id: 'lead_concierge', name: 'Lead Agent', dept: 'Sales', owned: true,
       pitch: 'Capture-page leads answered in minutes — qualified, warmed, and booked before they go cold.', price: 'Included' },
     { id: 'engagement_engine', name: 'Engagement Agent', dept: 'Marketing', owned: true,
@@ -290,7 +290,7 @@ if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
   ];
   demo.instances = [
     { id: 'inst-followup', catalog_id: 'followup_engine', campaign_id: 'camp-1', name: 'Follow-Up Agent', dept: 'Sales', tier: 1,
-      mission: 'Runs every prospect to seven meaningful touches. Drafts each message in your voice for approval, spaces them naturally, and never lets a name fall through.',
+      mission: 'Runs every prospect to seven meaningful touches. Drafts each message in your writing style for approval, spaces them naturally, and never lets a name fall through.',
       actions: [
         { key: 'draft', name: 'Draft follow-ups', state: 'auto' },
         { key: 'log', name: 'Log & schedule touches', state: 'auto' },
@@ -303,7 +303,7 @@ if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
         { when: 'Mon 7:00am', what: '8 prospects worked · 1 asked to join your team — flagged hot' },
       ] },
     { id: 'inst-content', catalog_id: 'content_engine', campaign_id: 'camp-1', name: 'Content Agent', dept: 'Marketing', tier: 1,
-      mission: 'Keeps your feed and blog alive in your voice — daily post drafts with graphics, ready to approve each morning.',
+      mission: 'Keeps your feed and blog alive in your writing style — daily post drafts with graphics, ready to approve each morning.',
       actions: [
         { key: 'draft_post', name: 'Draft posts & blogs', state: 'auto' },
         { key: 'image', name: 'Generate graphics', state: 'auto' },
@@ -311,23 +311,24 @@ if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
       ],
       streak: { action: 'Publish', count: 6, threshold: 20 },
       runs: [
-        { when: 'Today 6:30am', what: 'Tomorrow’s post drafted + graphic generated · awaiting approval' },
+        { when: 'Today 6:30am', what: 'Sample post drafted · awaiting approval' },
         { when: 'Yesterday', what: 'Post approved & published · engagement up, 4 comments handed to Engagement' },
       ] },
     { id: 'inst-lead', catalog_id: 'lead_concierge', campaign_id: 'camp-1', name: 'Lead Agent', dept: 'Sales', tier: 1,
-      mission: 'Answers every capture-page lead within minutes — qualifies them, answers honest questions, and books the conversation before they go cold.',
+      mission: 'Drafts replies to capture-page leads, organizes their questions, and proposes meeting times for your approval.',
       actions: [
         { key: 'reply', name: 'Draft lead replies', state: 'auto' },
         { key: 'qualify', name: 'Qualify & tag leads', state: 'auto' },
+        { key: 'send', name: 'Send lead replies', state: 'ask' },
         { key: 'book', name: 'Propose meeting times', state: 'ask' },
       ],
       streak: { action: 'Propose meeting times', count: 9, threshold: 20 },
       runs: [
-        { when: 'Today 8:14am', what: 'New lead from your capture page · replied in 4 min · booked Thursday' },
+        { when: 'Today 8:14am', what: 'New lead from your capture page · reply and meeting proposal awaiting approval' },
         { when: 'Yesterday', what: '2 leads worked · 1 qualified hot, handed to Follow-Up' },
       ] },
     { id: 'inst-engage', catalog_id: 'engagement_engine', campaign_id: 'camp-1', name: 'Engagement Agent', dept: 'Marketing', tier: 1,
-      mission: 'Watches your comments and DMs around the clock. Drafts warm, human replies in your voice — you approve, your audience never feels ignored.',
+      mission: 'Watches your comments and DMs around the clock. Drafts warm, human replies in your writing style — you approve, your audience never feels ignored.',
       actions: [
         { key: 'comment', name: 'Draft comment replies', state: 'auto' },
         { key: 'dm', name: 'Draft DM replies', state: 'auto' },
@@ -359,8 +360,8 @@ if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
       ],
       streak: { action: 'Send replies', count: 11, threshold: 20 },
       runs: [
-        { when: 'Today 6:00am', what: 'Scanned 27 messages · 2 prospect replies surfaced · 1 company notice flagged' },
-        { when: 'Yesterday 6:00am', what: 'Scanned 31 messages · quiet day, nothing urgent' },
+        { when: 'Today 6:00am (manual)', what: 'Scanned 27 messages · 2 prospect replies surfaced · 1 company notice flagged' },
+        { when: 'Yesterday 6:00am (manual)', what: 'Scanned 31 messages · quiet day, nothing urgent' },
       ] },
     { id: 'inst-ask', catalog_id: 'ask', campaign_id: null, name: 'Ask KitCrew', dept: 'General', tier: 1,
       mission: 'General-purpose help: questions, page reads, file summaries, business memory.',
@@ -371,35 +372,40 @@ if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
   demo.approvals = [
     { id: 'ap1', agent: 'Follow-Up Agent', time: '7:02am', title: 'Touch #3 to Denise W. — she watched the video',
       preview: 'Hi Denise! Saw you got a chance to watch the overview. No pressure at all — most people have one or two questions right about now. What stood out to you?' },
-    { id: 'ap2', agent: 'Content Agent', time: '6:30am', title: 'Tomorrow’s post — "the system works while you sleep" (graphic attached)',
-      preview: 'Woke up to three conversations my follow-up system started while I was asleep. Not magic — just a system that never forgets anyone. DM me "SYSTEM" if you want to see how it runs.' },
+    { id: 'ap2', agent: 'Content Agent', time: '6:30am', title: 'Sample post — keeping follow-ups organized',
+      preview: 'A clear follow-up list helps me keep track of questions and next steps. I review each message before sending. Here is how I organize my week.' },
   ];
+  demo.approvals.push(
+    { id: 'ap-followup-rob', agent: 'Follow-Up Agent', time: '7:02am', title: 'Check-in with Rob T.', preview: 'Hi Rob, just checking whether you have any questions. No pressure if now is not the right time.' },
+    { id: 'ap-followup-question', agent: 'Follow-Up Agent', time: '7:02am', title: 'Product question from Kayla’s sister', preview: 'Thanks for asking. Which product details would be most useful to you?' },
+    { id: 'ap-lead', agent: 'Lead Agent', time: '8:14am', title: 'Lead reply and proposed meeting', preview: 'Thanks for your question. Would Thursday at 2pm work for a conversation? Please confirm your time zone.' }
+  );
   demo.activity = [
     { time: '7:02am', body: '<b>Follow-Up Agent</b> queued 3 touch drafts for your approval' },
-    { time: '6:30am', body: '<b>Content Agent</b> drafted tomorrow’s post + generated the graphic' },
+    { time: '6:30am', body: '<b>Content Agent</b> drafted a sample post for review' },
     { time: 'Yesterday', body: '<b>Duplication Agent</b> onboarded <b>Kayla M.</b> — first-steps checklist started' },
-    { time: 'Yesterday', body: '<b>Lead Agent</b> answered a capture-page lead in 4 minutes — booked for Thursday' },
+    { time: 'Yesterday', body: '<b>Lead Agent</b> drafted a lead reply and a Thursday meeting proposal for approval' },
     { time: 'Mon', body: 'You corrected the Content Agent: <b>"never use hype words"</b> — remembered' },
   ];
   demo.chat = {
     'inst-followup': [
       { role: 'user', text: 'Who needs me this morning?' },
-      { role: 'agent', text: '3 touches are drafted and waiting on you — approve and I’ll send.\n- **Denise W.** watched the overview video — touch #3 drafted, question-style.\n- **Rob T.** went quiet after touch #4 — a light check-in is drafted, no pressure.\n- **Kayla M.’s sister** asked about the product — that one I’d rather you see first.', meta: 'Auto-loop ran 7:00am · worked 9 prospects' },
+      { role: 'agent', text: '3 touches are drafted and waiting on you — approve and I’ll send.\n- **Denise W.** watched the overview video — touch #3 drafted, question-style.\n- **Rob T.** went quiet after touch #4 — a light check-in is drafted, no pressure.\n- **Kayla M.’s sister** asked about the product — that one I’d rather you see first.', meta: 'Sample manual run at 7:00am · worked 9 prospects' },
     ],
     'inst-content': [
-      { role: 'agent', text: 'Tomorrow’s post is drafted with a fresh graphic — it’s in Approvals. Want a different angle? Tell me in a sentence and I’ll redraft.' },
+      { role: 'agent', text: 'A sample post is drafted — it’s in Approvals. Want a different angle? Tell me in a sentence and I’ll redraft.' },
     ],
     'inst-lead': [
-      { role: 'agent', text: 'A new lead hit your capture page at 8:10am — I replied in 4 minutes, answered her product question, and she’s booked for Thursday 2pm. Details are in Activity.' },
+      { role: 'agent', text: 'A new lead hit your capture page at 8:10am — I drafted a reply to her product question and proposed Thursday at 2pm. Both await your approval; nothing has been sent or booked. Details are in Activity.' },
     ],
     'inst-engage': [
-      { role: 'agent', text: '6 comments and 2 DMs came in overnight — replies are drafted in your voice. One DM asked how to order; I flagged it hot and handed it to your Follow-Up Agent.' },
+      { role: 'agent', text: '6 comments and 2 DMs came in overnight — replies are drafted in your writing style. One DM asked how to order; I flagged it hot and handed it to your Follow-Up Agent.' },
     ],
     'inst-team': [
       { role: 'agent', text: 'Kayla M. finished step 2 of her first-steps checklist (capture page live). Step 3 is her first post — a nudge is drafted whenever you want to send it.' },
     ],
     'inst-triage2': [
-      { role: 'agent', text: 'Morning sweep done — 27 messages scanned. 2 prospect replies are on top, one company notice about the fall promo is flagged, everything else is summarized below.' },
+      { role: 'agent', text: 'Sample manual sweep done — 27 messages scanned. 2 prospect replies are on top, one company notice about the fall promo is flagged, everything else is summarized below.' },
     ],
     'inst-ask': [
       { role: 'agent', text: 'Ask me anything — a question, a page, a file. I remember your business.' },
@@ -490,7 +496,7 @@ const api = {
         ...demo.approvals,
         { id: `ap-content-demo-${stamp}-1`, agent: 'Content Agent', time,
           title: 'Post — the system works while you sleep',
-          preview: 'Woke up to three conversations my follow-up system started while I was asleep. Not magic — just a system that never forgets anyone. DM me "SYSTEM" if you want to see how it runs.' },
+          preview: 'A clear follow-up list helps me keep track of questions and next steps. I review each message before sending. Here is how I organize my week.' },
         { id: `ap-content-demo-${stamp}-2`, agent: 'Content Agent', time,
           title: 'Blog — What actually changes when follow-up never stops',
           preview: 'Most deals are lost to silence, not rejection. Here is what changed once every prospect got a real follow-up cadence instead of two tries and a shrug…' },
@@ -498,7 +504,7 @@ const api = {
       return {
         ok: true,
         output: "Today's content is drafted (demo) — 3 posts across distinct angles (value, story, engagement) plus a short blog draft, " +
-          'in your voice. 2 samples are waiting in **Approvals** for the tour; on a live account all 4 land there.\n\n---\n' +
+          'in your writing style. 2 samples are waiting in **Approvals** for the tour; on a live account all 4 land there.\n\n---\n' +
           "On a live account, this is grounded only in your agent's goal, doctrine, and your voice profile — never invented product facts, and nothing here is real yet.",
         drafts_queued: 2,
       };
@@ -653,6 +659,7 @@ const api = {
 };
 
 async function callPlatform(task, payload) {
+  if (DEMO_MODE || !ACCESS_CODE) return { ok: false, error: 'Sign in to use your live account.' };
   // Real transport — same seat-auth envelope as kitfire-worker (SPEC_V1 pattern).
   const access_code = ACCESS_CODE;
   try {
@@ -689,6 +696,15 @@ function brandPlanLabel(plan) {
 }
 
 async function loadLiveState() {
+  // Never carry sample account data into a live session, including partial failures.
+  demo.instances = []; demo.catalog = []; demo.approvals = []; demo.activity = [];
+  demo.campaigns = []; demo.chat = {}; demo.teamSeats = []; demo.invoices = [];
+  demo.schedules = {}; demo.teamRoster = [];
+  demo.referral = { link: '', earnings: 0, count: 0, organization: [], tree: null };
+  demo.settings = { email: '', voice_profile_on_file: false, email_pings_enabled: false };
+  demo.seat = { display_name: 'Member', plan: '', role: 'member' };
+  currentInstance = null;
+
   // Campaigns (FLEET-0070/S230): resolve the active campaign BEFORE the
   // scoped reads below — list_campaigns also ensures the client's default
   // "My business" campaign exists on a fresh account. Pre-deploy (campaigns
@@ -713,6 +729,9 @@ async function loadLiveState() {
     callPlatform('referral_overview', {}),
     callPlatform('list_connectors', {}),
   ]);
+  if (![inst, cat, appr, act, usage, refer, conn].every(r => r && r.ok)) {
+    throw new Error('Some account data could not be loaded. Please retry.');
+  }
   if (inst && inst.ok) demo.instances = inst.instances;
   if (inst && inst.ok && Array.isArray(inst.campaigns) && inst.campaigns.length) demo.campaigns = inst.campaigns;
   if (cat && cat.ok && cat.catalog && cat.catalog.length) demo.catalog = cat.catalog;
@@ -781,7 +800,7 @@ function renderNav() {
   nav.innerHTML = '';
   for (const inst of demo.instances) {
     const btn = document.createElement('button');
-    btn.className = 'nav-item' + (currentView === 'chat' && inst.id === currentInstance.id ? ' active' : '');
+    btn.className = 'nav-item' + (currentView === 'chat' && inst.id === currentInstance?.id ? ' active' : '');
     btn.innerHTML = `<span class="nav-ico">&#9679;</span> ${escapeHtml(inst.name)} <span class="agent-status"></span>`;
     btn.addEventListener('click', () => { selectInstance(inst.id); });
     nav.appendChild(btn);
@@ -811,7 +830,7 @@ function renderChips() {
   row.innerHTML = '';
   for (const inst of demo.instances) {
     const c = document.createElement('button');
-    c.className = 'chip' + (currentView === 'chat' && inst.id === currentInstance.id ? ' active' : '');
+    c.className = 'chip' + (currentView === 'chat' && inst.id === currentInstance?.id ? ' active' : '');
     c.textContent = inst.name;
     c.addEventListener('click', () => selectInstance(inst.id));
     row.appendChild(c);
@@ -895,7 +914,10 @@ async function switchCampaign(campaignId) {
       callPlatform('list_approvals', scoped),
       callPlatform('list_activity', scoped),
     ]);
-    if (inst && inst.ok) demo.instances = inst.instances;
+    if (![inst, cat, appr, act, usage, refer, conn].every(r => r && r.ok)) {
+    throw new Error('Some account data could not be loaded. Please retry.');
+  }
+  if (inst && inst.ok) demo.instances = inst.instances;
     if (appr && appr.ok) demo.approvals = appr.approvals;
     if (act && act.ok) demo.activity = act.activity;
   }
@@ -1080,7 +1102,7 @@ function greetingLine() {
   const work = n > 0
     ? `${n} approval${n === 1 ? '' : 's'} waiting on you`
     : 'nothing waiting on you';
-  const health = demo.paused ? 'agents are paused' : 'all agents healthy';
+  const health = demo.paused ? 'demo agents paused' : (DEMO_MODE ? 'sample activity' : 'live account');
   return { head: `${part}, ${first}.`, sub: `${work} · ${health}.` };
 }
 
@@ -2447,7 +2469,7 @@ async function renderSettings() {
     $('rotateCodeBtn').classList.toggle('hidden', s.role !== 'admin');
     $('rotateCodeMemberNote').classList.toggle('hidden', s.role === 'admin');
     $('settingsVoiceStatus').textContent = s.voice_profile_on_file
-      ? 'Taught — your agents already draft in your voice.'
+      ? 'Taught — your agents already draft in your writing style.'
       : "Not taught yet — teach it below and every draft matches how you write.";
     $('settingsMhStatus').textContent = s.markethive_link ? 'On file: ' + s.markethive_link : 'Not set yet.';
     $('settingsPingToggle').checked = s.email_pings_enabled !== false;
@@ -2524,26 +2546,13 @@ $('settingsNameSaveBtn').addEventListener('click', async () => {
   setTimeout(() => { btn.textContent = 'Save'; }, 2400);
 });
 
-$('rotateCodeBtn').addEventListener('click', async () => {
-  const confirmed = window.confirm(
-    "Send yourself a new access code?\n\nYour CURRENT code stops working the moment the new one goes out — you'll need the new code from your email to sign back in."
-  );
-  if (!confirmed) return;
-  const btn = $('rotateCodeBtn');
-  const note = $('settingsCodeNote');
-  btn.disabled = true;
-  btn.textContent = 'Sending…';
-  const res = await api.rotateAccessCode();
-  btn.disabled = false;
-  btn.textContent = 'Send me a new access code';
-  note.classList.remove('hidden');
-  if (res && res.ok) {
-    note.textContent = res.message || "We emailed your new code — the old one just stopped working.";
-  } else if (!DEMO_MODE && settingsTaskNotLive(res)) {
-    note.textContent = "Access-code rotation isn't live yet — check back soon.";
-  } else {
-    note.textContent = (res && res.error) || "Couldn't rotate your code — try again in a moment.";
+$('rotateCodeBtn').addEventListener('click', () => {
+  if (DEMO_MODE) {
+    $('settingsCodeNote').classList.remove('hidden');
+    $('settingsCodeNote').textContent = 'Demo only. No email is sent and no access code changes.';
+    return;
   }
+  location.href = location.pathname + '?recover=1';
 });
 
 $('settingsVoiceBtn').addEventListener('click', () => showView('voice'));
@@ -2570,7 +2579,8 @@ function renderHealth() {
   $('healthDot').classList.toggle('paused', demo.paused);
   $('healthText').textContent = demo.paused
     ? 'Agents paused — resume any time'
-    : 'All agents ran on time';
+    : (DEMO_MODE ? 'Demo — sample activity' : 'Live account — schedules set per agent');
+  $('pauseAllBtn').hidden = !DEMO_MODE;
   $('pauseAllBtn').classList.toggle('on', demo.paused);
   $('pauseAllBtn').innerHTML = demo.paused ? '&#9654;' : '&#10074;&#10074;';
   $('pauseAllBtn').title = demo.paused ? 'Resume all agents' : 'Pause all agents';
@@ -2578,6 +2588,7 @@ function renderHealth() {
 }
 
 $('pauseAllBtn').addEventListener('click', () => {
+  if (!DEMO_MODE) return;
   demo.paused = !demo.paused;
   demo.activity.unshift({
     time: 'Just now',
@@ -2590,8 +2601,9 @@ $('pauseAllBtn').addEventListener('click', () => {
 // ---------- init ----------
 
 async function boot() {
+  await window.KC_GATE_READY;
   if (!DEMO_MODE) {
-    await loadLiveState();
+    try { await loadLiveState(); } catch { window.KC_SHOW_LOAD_ERROR(); return; }
   } else if (isTecHiveSkin() && demo.campaigns.length) {
     // Demo tour (FLEET-0070): default to the first sample campaign and
     // apply the same client-side filter switchCampaign() uses later — a

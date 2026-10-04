@@ -1,0 +1,30 @@
+import { JSDOM } from 'jsdom';
+import { readFile } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const root=new URL('../app/', import.meta.url);
+const html=await readFile(new URL('index.html',root),'utf8');
+const sources=await Promise.all(['gate.js','brand.js','app.js'].map(f=>readFile(new URL(f,root),'utf8')));
+async function page(query='', stored='', api=async()=>({ok:false,error:'fixture unavailable'})) {
+ const dom=new JSDOM(html,{url:'https://itsgreatbusiness.com/app/'+query,runScripts:'outside-only',pretendToBeVisual:true});
+ const {window:w}=dom;const requests=[];
+ if(stored)w.sessionStorage.setItem('kf_access_code',stored);
+ w.fetch=async(url,options)=>{const b=JSON.parse(options.body);requests.push(b.task);return {ok:true,json:()=>api(b)}};
+ w.scrollTo=()=>{};w.HTMLElement.prototype.scrollTo=()=>{};
+ for(const s of sources)w.eval(s);
+ w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
+ await new Promise(r=>setTimeout(r,350));
+ return {w,requests,close:()=>w.close()};
+}
+const a=await page('?demo=1','synthetic-test-session');
+assert.equal(a.requests.length,0,'demo must never authenticate or call live APIs despite saved login');
+assert.equal(a.w.document.getElementById('memberWorkspace').hidden,false);
+assert.match(a.w.document.getElementById('seatName').textContent,/Demo/);
+assert.equal(a.w.sessionStorage.getItem('kf_access_code'),'synthetic-test-session');
+a.close();console.log('PASS demo isolation preserves but never uses saved login');
+const b=await page();assert.equal(b.requests.length,0);assert.equal(b.w.document.getElementById('memberWorkspace').hidden,true);b.close();console.log('PASS logged-out workspace remains inaccessible');
+const c=await page('','synthetic-test-session');assert.equal(c.w.sessionStorage.getItem('kf_access_code'),null);assert.equal(c.w.document.getElementById('memberWorkspace').hidden,true);c.close();console.log('PASS rejected saved sign-in is cleared without revealing samples');
+let usages=0;
+const d=await page('','synthetic-test-session',async b=>b.task==='get_usage'&&++usages===1?{ok:true}:{ok:false,error:'fixture outage'});
+assert.equal(d.w.document.getElementById('memberWorkspace').hidden,true);assert.match(d.w.document.getElementById('gateErr').textContent,/could not load completely/);assert.equal(d.w.document.getElementById('seatName').textContent.includes('Marcus'),false);d.close();console.log('PASS partial live outage fails closed without sample account fallback');
+const e=await page('?recover=1','synthetic-test-session');assert.equal(e.requests.length,0);assert.equal(e.w.document.getElementById('recoveryPanel').hidden,false);e.close();console.log('PASS recovery opens without consuming a saved login');
+console.log('5 frontend integration checks passed');

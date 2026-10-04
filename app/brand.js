@@ -21,8 +21,7 @@
   const qs = new URLSearchParams(location.search);
   // Lane hostnames: itsgreatbusiness.com (current live home until the
   // 301), kitcrew.ai (the S246 brand home), techive.* (legacy).
-  const isLane = qs.get('brand') === 'techive' ||
-    /(^|\.)techive\.|(^|\.)kitcrew\.|(^|\.)itsgreatbusiness\./i.test(location.hostname);
+  const isLane = true;
 
   window.KF_BRAND = isLane
     ? {

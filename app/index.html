@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>KitFire — your AI workforce</title>
+<title>KitCrew | Member back office</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <!-- ?v= cache-buster (S221): bump on every app.css/app.js/brand.js edit —
      a stale cached stylesheet rendered the org avatars unsized/huge live. -->
-<link rel="stylesheet" href="app.css?v=246.1" />
+<link rel="stylesheet" href="app.css?v=20261004.1" />
 <!-- PWA install (FLEET-0071, S230): TecHive-branded manifest — this app/
      directory is shared with the KitFire skin (brand.js), but the static
      manifest fields (name/theme) are TecHive's per the packet; a future
@@ -40,19 +40,19 @@
   }
   .gate-mark { font-family: "Sora", sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 6px; }
   .gate-mark .g-tec { color: var(--text, #eef1f6); }
-  .gate-mark .g-hive { color: #f59e0b; }
+  .gate-mark .g-hive { color: #22d3c7; }
   .gate-card h1 { font-size: 16px; font-weight: 600; color: var(--text, #eef1f6); margin: 0 0 4px; }
   .gate-card .gate-sub { font-size: 13px; color: var(--text-dim, #9aa4b5); margin-bottom: 26px; }
   .gate-card input {
-    width: 100%; padding: 13px 16px; border-radius: 10px; font-size: 15px;
+    width: 100%; padding: 13px 16px; border-radius: 10px; font-size: 16px;
     background: var(--bg, #0b0f17); border: 1px solid var(--line-strong, rgba(255,255,255,0.16));
     color: var(--text, #eef1f6); outline: none; text-align: center; letter-spacing: 1px;
     font-family: inherit;
   }
-  .gate-card input:focus { border-color: rgba(245, 158, 11, 0.5); }
+  .gate-card input:focus { border-color: rgba(34, 211, 199, 0.5); }
   .gate-btn {
     width: 100%; margin-top: 12px; padding: 13px 16px; border: none; border-radius: 10px;
-    background: #f59e0b; color: #14100a; font-size: 15px; font-weight: 700; cursor: pointer;
+    background: #22d3c7; color: #14100a; font-size: 15px; font-weight: 700; cursor: pointer;
     font-family: inherit; transition: transform 0.1s, opacity 0.2s;
   }
   .gate-btn:hover { transform: translateY(-1px); }
@@ -60,90 +60,65 @@
   .gate-err { min-height: 20px; margin-top: 12px; font-size: 13px; color: #ff6b5e; }
   .gate-links { margin-top: 22px; font-size: 13px; color: var(--text-faint, #626d80); }
   .gate-links a { color: var(--text-dim, #9aa4b5); text-decoration: none; }
-  .gate-links a:hover { color: #f59e0b; }
+  .gate-links a:hover { color: #22d3c7; }
   .mode-chip {
     position: fixed; right: 16px; bottom: 16px; z-index: 999;
     padding: 7px 14px; border-radius: 100px; font-size: 12px; font-weight: 600;
-    background: rgba(245, 158, 11, 0.14); border: 1px solid rgba(245, 158, 11, 0.42);
-    color: #f59e0b; pointer-events: none;
+    background: rgba(34, 211, 199, 0.14); border: 1px solid rgba(34, 211, 199, 0.42);
+    color: #22d3c7; pointer-events: none;
   }
+  #memberWorkspace:not([hidden]) { display: contents; }
+  #memberGate { overflow-y: auto; align-items: safe center; }
+  .gate-card label { display: block; text-align: left; margin: 14px 0 6px; font-size: 14px; }
+  .gate-link-btn { background: none; border: 0; color: #22d3c7; cursor: pointer; min-height: 48px; font: inherit; }
+  .gate-card :focus-visible { outline: 2px solid #22d3c7; outline-offset: 3px; }
+  #recoveryPanel { text-align: left; font-size: 14px; line-height: 1.5; }
+  #recoveryPanel a { color: #22d3c7; }
+  #recoveryPanel summary { cursor: pointer; padding: 14px 0; }
+  @media (prefers-reduced-motion: reduce) { .gate-btn { transition: none; } .gate-btn:hover { transform: none; } }
 </style>
 <div id="memberGate">
   <div class="gate-card">
-    <div class="gate-mark"><span class="g-tec">Tec</span><span class="g-hive">Hive</span></div>
+    <div class="gate-mark"><span class="g-tec">Kit</span><span class="g-hive">Crew</span></div>
     <h1>Member back office</h1>
-    <p class="gate-sub">Enter the access code we emailed you when you joined.</p>
-    <form id="gateForm">
-      <input id="gateCode" type="password" autocomplete="off" spellcheck="false" placeholder="Access code" />
+    <p class="gate-sub">Sign in with your access code, or recover access using your account email.</p>
+    <form id="gateForm" method="post">
+      <label for="gateCode">Access code</label>
+      <input id="gateCode" name="access_code" type="password" autocomplete="current-password" required maxlength="256" aria-describedby="gateErr" spellcheck="false" placeholder="Access code" />
       <button type="submit" class="gate-btn" id="gateBtn">Open my back office</button>
-      <div class="gate-err" id="gateErr"></div>
+      <div class="gate-err" id="gateErr" role="status" aria-live="polite"></div>
     </form>
+    <button type="button" id="recoveryToggle" class="gate-link-btn" aria-expanded="false" aria-controls="recoveryPanel">Forgot your access code?</button>
+    <section id="recoveryPanel" hidden aria-label="Recover your account">
+      <p>Verify your email, then choose a new access code. Your current code keeps working until you finish.</p>
+      <form id="recoveryRequestForm" method="post">
+        <label for="recoveryEmail">Account email</label>
+        <input id="recoveryEmail" name="email" type="email" autocomplete="email" required maxlength="254" />
+        <button class="gate-btn" type="submit" id="recoveryRequestBtn">Email recovery instructions</button>
+      </form>
+      <details id="recoveryCompletePanel">
+        <summary>I have my recovery code</summary>
+        <form id="recoveryCompleteForm" method="post">
+          <label for="recoveryProof">Recovery code from your email</label>
+          <input id="recoveryProof" name="recovery_code" type="password" autocomplete="one-time-code" required minlength="64" maxlength="64" />
+          <label for="recoveryNewCode">New access code (20–128 characters)</label>
+          <input id="recoveryNewCode" name="new_code" type="password" autocomplete="new-password" required minlength="20" maxlength="128" />
+          <label for="recoveryConfirmCode">Confirm new access code</label>
+          <input id="recoveryConfirmCode" name="confirm_code" type="password" autocomplete="new-password" required minlength="20" maxlength="128" />
+          <button class="gate-btn" type="submit" id="recoveryCompleteBtn">Save my new access code</button>
+        </form>
+      </details>
+      <p id="recoveryStatus" role="status" aria-live="polite"></p>
+      <p>Need help? <a href="mailto:ceo@kitfire.ai?subject=KitCrew%20account%20access">Contact KitCrew support</a>. Never email your access code.</p>
+    </section>
+    <noscript><p>JavaScript is required to sign in. Enable it and reload this page.</p></noscript>
     <div class="gate-links">
-      Not a member yet? <a href="/">See what TecHive is</a><br />
+      Not a member yet? <a href="https://kitcrew.ai/">Explore KitCrew</a><br />
       Just looking? <a href="/app/?demo=1">Take the demo tour</a>
     </div>
   </div>
 </div>
-<script>
-(function () {
-  // S225 separation ruling: TecHive talks to TecHive's OWN function —
-  // kitfire-platform belongs to kitfire.ai and is never reused here.
-  var ENDPOINT = 'https://obwjlqrzshdglrccsbtl.supabase.co/functions/v1/techive-platform';
-  var gate = document.getElementById('memberGate');
-  var qs = new URLSearchParams(location.search);
-
-  function chip(text) {
-    var el = document.createElement('div');
-    el.className = 'mode-chip';
-    el.textContent = text;
-    document.body.appendChild(el);
-  }
-  function unlock(label) { gate.classList.add('hidden'); if (label) chip(label); }
-
-  if (qs.get('demo') === '1') { unlock('DEMO — sample data'); return; }
-  // S225: a valid code is now KEPT (tab-session only) — app.js sends it on
-  // every kitfire-platform call, which is what makes the views live. The
-  // old th_authed boolean is gone: without the code there's nothing to
-  // authenticate calls with, so its holder re-enters the code once.
-  if (sessionStorage.getItem('kf_access_code')) {
-    unlock('LIVE — your account');
-    return;
-  }
-
-  var form = document.getElementById('gateForm');
-  var input = document.getElementById('gateCode');
-  var btn = document.getElementById('gateBtn');
-  var err = document.getElementById('gateErr');
-
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    var code = input.value.trim();
-    if (!code) { err.textContent = 'Enter your access code.'; return; }
-    btn.disabled = true;
-    err.textContent = '';
-    fetch(ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ access_code: code, task: 'get_usage' })
-    })
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        if (data && data.ok) {
-          sessionStorage.setItem('kf_access_code', code);
-          // app.js already booted in demo mode before the gate cleared —
-          // reload so it boots again with the code present and loads live.
-          location.reload();
-        } else {
-          err.textContent = "That code didn't unlock. Check the email we sent when you joined.";
-        }
-      })
-      .catch(function () {
-        err.textContent = "Couldn't reach the server. Give it a minute and try again.";
-      })
-      .finally(function () { btn.disabled = false; });
-  });
-})();
-</script>
+<div id="memberWorkspace" hidden inert>
 
 <!-- ============ LEFT SIDEBAR (platform mode) ============ -->
 <aside id="sidebar">
@@ -536,9 +511,9 @@
       </div>
       <div class="bill-card">
         <div class="bill-card-title">Access code</div>
-        <div class="bill-hint" style="margin-bottom:10px">This code is how the panel knows it's you — there's no password to remember or reset. Lost it, or think someone else has it? Send yourself a new one; the old code stops working the moment the new one goes out.</div>
-        <button class="btn-ghost hidden" id="rotateCodeBtn">Send me a new access code</button>
-        <div class="bill-hint role-hint" id="rotateCodeMemberNote">Only admins can rotate the access code.</div>
+        <div class="bill-hint" style="margin-bottom:10px">Your access code signs you in. To replace it, verify your account email and choose a new code. The current code stays valid until you finish recovery.</div>
+        <button class="btn-ghost hidden" id="rotateCodeBtn">Recover or replace my access code</button>
+        <div class="bill-hint role-hint" id="rotateCodeMemberNote">Ask your administrator for account-access help.</div>
         <div id="settingsCodeNote" class="spawn-note hidden" style="margin-top:10px"></div>
       </div>
       <div class="bill-card">
@@ -565,8 +540,8 @@
            is a "don't show me this again" preference, not a login state,
            and should stay dismissed across future visits/tabs). ===== -->
       <div class="bill-card hidden" id="settingsA2hsCard">
-        <div class="bill-card-title">Install TecHive</div>
-        <div class="bill-hint">Add TecHive to your home screen for one-tap access to Approvals from your phone. In your browser's menu, look for "Add to Home Screen" or "Install app".</div>
+        <div class="bill-card-title">Install KitCrew</div>
+        <div class="bill-hint">Add KitCrew to your home screen for one-tap access to Approvals from your phone. In your browser's menu, look for "Add to Home Screen" or "Install app".</div>
         <button class="mini-btn line" id="settingsA2hsDismissBtn" style="align-self:flex-start">Got it</button>
       </div>
       <div class="bill-card">
@@ -635,8 +610,10 @@
 
 <div id="scrim" class="hidden"></div>
 
-<script src="brand.js?v=246.1"></script>
-<script src="app.js?v=246.1"></script>
+</div>
+<script src="gate.js?v=20261004.1"></script>
+<script src="brand.js?v=20261004.1"></script>
+<script src="app.js?v=20261004.1"></script>
 <!-- PWA service worker (FLEET-0071, S230): network-first passthrough only,
      no offline caching of member data (privacy over cleverness — packet
      requirement). Registration itself is independent of login/DEMO_MODE;
