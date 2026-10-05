@@ -207,6 +207,7 @@ const demo = {
 if (window.KF_BRAND && window.KF_BRAND.key === 'techive') {
   demo.seat = { display_name: 'Marcus (Demo)', plan: 'Duplicator Pro · $299/mo founding rate', role: 'admin' };
   demo.teamSeats = [{ name: 'Marcus (Demo)', role: 'admin' }];
+  demo.invoices = []; // Demo has no real invoices.
   demo.referral = { link: 'kitcrew.ai/start?ref=demo-marcus', earnings: '119.60', count: 5 };
   demo.settings = { email: 'marcus@yourbusiness.com', voice_profile_on_file: true, email_pings_enabled: true };
   // Demo org chart — the customer-visible projection of affiliate_profiles
@@ -1420,6 +1421,7 @@ $('spawnReviseBtn').addEventListener('click', () => {
 $('spawnCancelBtn').addEventListener('click', () => showView('catalog'));
 
 // ---------- approvals ----------
+const pendingApprovalIds = new Set();
 
 function renderApprovals() {
   const list = $('approvalList');
@@ -1439,25 +1441,41 @@ function renderApprovals() {
       <div class="appr-title">${escapeHtml(a.title)}</div>
       <div class="appr-preview">${escapeHtml(a.preview)}</div>
       <div class="appr-actions">
-        <button class="mini-btn fire" data-approve="${a.id}">Approve &amp; send</button>
+        <button class="mini-btn fire" data-approve="${escapeHtml(a.id)}">${DEMO_MODE ? 'Try approval' : 'Record approval'}</button>
         <button class="mini-btn line" data-edit="${a.id}">Edit first</button>
         <button class="mini-btn line" data-reject="${a.id}">Reject</button>
       </div>
-      <div class="appr-claim">First approver wins — the moment a teammate acts on this, it locks for everyone else.</div>`;
+      <div class="appr-claim">${DEMO_MODE ? 'Demo only — no message is sent or published.' : 'This records your decision. Sending and publishing are not yet enabled.'}</div>
+      <div class="appr-status" role="status" aria-live="polite"></div>`;
     list.appendChild(card);
   }
   list.querySelectorAll('[data-approve]').forEach((b) => b.addEventListener('click', () => resolveApproval(b.dataset.approve, 'approved')));
   list.querySelectorAll('[data-reject]').forEach((b) => b.addEventListener('click', () => resolveApproval(b.dataset.reject, 'rejected')));
   list.querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => {
     const a = demo.approvals.find((x) => x.id === b.dataset.edit);
-    selectInstance('inst-triage');
+    const owner = demo.instances.find((i) => i.id === a?.instance_id || i.name === a?.agent);
+    if (!owner) { b.closest('.appr-card').querySelector('.appr-status').textContent = 'This draft’s agent could not be found. Reload and try again.'; return; }
+    selectInstance(owner.id);
     $('composerInput').value = 'Edit the draft to ' + (a ? a.title.toLowerCase() : '') + ': ';
     $('composerInput').focus();
   }));
 }
 
 async function resolveApproval(id, verdict) {
-  await api.approve(id, verdict);
+  if (pendingApprovalIds.has(id)) return;
+  pendingApprovalIds.add(id);
+  const card = Array.from($('approvalList').querySelectorAll('.appr-card')).find((c) => c.querySelector('[data-approve]')?.dataset.approve === id);
+  const status = card?.querySelector('.appr-status');
+  card?.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+  if (status) status.textContent = 'Saving your decision…';
+  try {
+    const result = await api.approve(id, verdict);
+    if (!result?.ok) throw new Error(result?.error || 'Your decision could not be saved. Try again.');
+  } catch (error) {
+    if (status) status.textContent = error.message || 'Could not reach KitCrew. Try again.';
+    card?.querySelectorAll('button').forEach((b) => { b.disabled = false; });
+    return;
+  } finally { pendingApprovalIds.delete(id); }
   const a = demo.approvals.find((x) => x.id === id);
   demo.approvals = demo.approvals.filter((x) => x.id !== id);
   if (a) {
@@ -1465,7 +1483,7 @@ async function resolveApproval(id, verdict) {
     const first = demo.seat.display_name.split(' ')[0];
     demo.activity.unshift({
       time: 'Just now',
-      body: `<b>${escapeHtml(first)}</b> ${verdict} <b>${escapeHtml(a.title)}</b> — locked for teammates`,
+      body: `<b>${escapeHtml(first)}</b> ${verdict} <b>${escapeHtml(a.title)}</b> — ${DEMO_MODE ? 'demo only; no live action' : 'decision recorded; delivery not performed'}`,
     });
     // Graduation math: an unedited approve advances the streak (server-side
     // truth in the real build; mirrored here for the demo).
@@ -2067,7 +2085,7 @@ function renderBilling() {
     <div class="bill-card-title">Your plan</div>
     <div class="plan-line"><span>Plan</span><b>${escapeHtml(planName)}</b></div>
     <div class="plan-line"><span>Rate</span><b>${escapeHtml(demo.seat.plan.split(' · ')[1] || '')}</b></div>
-    <div class="plan-line"><span>Renews</span><b>${DEMO_MODE ? 'Aug 1, 2026' : 'Monthly · managed in Stripe'}</b></div>
+    <div class="plan-line"><span>Renews</span><b>${DEMO_MODE ? 'Demo only — no renewal scheduled' : 'See your billing portal'}</b></div>
     <div class="plan-line"><span>Usage this week</span><b>${demo.usage.week.pct}% of tank</b></div>${
     // TecHive: one plan, Duplicator Pro — there is no Full Workforce to
     // upgrade to (S232), so the upgrade CTA is KitFire-skin only.
@@ -2097,7 +2115,9 @@ function renderBilling() {
   const inv = $('invoiceList');
   inv.innerHTML = '';
   if (demo.invoices.length === 0) {
-    inv.innerHTML = '<div class="bill-hint">Your invoices are in the Stripe portal — open "Manage billing" below.</div>';
+    inv.innerHTML = DEMO_MODE
+      ? '<div class="bill-hint">Demo only — no charges or invoices. Plan pricing is illustrative; your subscription details appear in your live billing portal.</div>'
+      : '<div class="bill-hint">Your invoices are in the Stripe portal — open "Manage billing" below.</div>';
   }
   for (const i of demo.invoices) {
     const row = document.createElement('div');
