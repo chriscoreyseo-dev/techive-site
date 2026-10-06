@@ -2,6 +2,16 @@
 (() => {
   const base = 'https://obwjlqrzshdglrccsbtl.supabase.co/functions/v1/';
   const $ = id => document.getElementById(id);
+  document.querySelectorAll('[data-secret-toggle]').forEach(button => {
+    button.addEventListener('click', () => {
+      const field = $(button.dataset.secretToggle);
+      const show = field.type === 'password';
+      field.type = show ? 'text' : 'password';
+      button.textContent = show ? 'Hide' : 'Show';
+      button.setAttribute('aria-pressed', String(show));
+      button.setAttribute('aria-label', button.getAttribute('aria-label').replace(/^(Show|Hide)/, show ? 'Hide' : 'Show'));
+    });
+  });
   let ready;
   window.KC_GATE_READY = new Promise(resolve => { ready = resolve; });
   function unlock(demo) {

@@ -75,6 +75,10 @@
   #recoveryPanel { text-align: left; font-size: 14px; line-height: 1.5; }
   #recoveryPanel a { color: #22d3c7; }
   #recoveryPanel summary { cursor: pointer; padding: 14px 0; }
+  .secret-field { display: flex; gap: 8px; align-items: center; }
+  .secret-field input { min-width: 0; flex: 1; }
+  .secret-toggle { flex: none; min-width: 58px; min-height: 48px; border: 1px solid #22d3c7; border-radius: 8px; background: transparent; color: #22d3c7; cursor: pointer; font: inherit; }
+  .gate-help { color: var(--text-dim, #9aa4b5); font-size: 13px; line-height: 1.5; margin: 8px 0; }
   @media (prefers-reduced-motion: reduce) { .gate-btn { transition: none; } .gate-btn:hover { transform: none; } }
 </style>
 <div id="memberGate">
@@ -84,7 +88,7 @@
     <p class="gate-sub">Sign in with your access code, or recover access using your account email.</p>
     <form id="gateForm" method="post">
       <label for="gateCode">Access code</label>
-      <input id="gateCode" name="access_code" type="password" autocomplete="current-password" required maxlength="256" aria-describedby="gateErr" spellcheck="false" placeholder="Access code" />
+      <div class="secret-field"><input id="gateCode" name="access_code" type="password" autocomplete="current-password" required maxlength="256" aria-describedby="gateErr" spellcheck="false" placeholder="Access code" /><button type="button" class="secret-toggle" data-secret-toggle="gateCode" aria-controls="gateCode" aria-label="Show access code" aria-pressed="false">Show</button></div>
       <button type="submit" class="gate-btn" id="gateBtn">Open my back office</button>
       <div class="gate-err" id="gateErr" role="status" aria-live="polite"></div>
     </form>
@@ -100,11 +104,12 @@
         <summary>I have my recovery code</summary>
         <form id="recoveryCompleteForm" method="post">
           <label for="recoveryProof">Recovery code from your email</label>
-          <input id="recoveryProof" name="recovery_code" type="password" autocomplete="one-time-code" required minlength="64" maxlength="64" />
-          <label for="recoveryNewCode">New access code (20–128 characters)</label>
-          <input id="recoveryNewCode" name="new_code" type="password" autocomplete="new-password" required minlength="20" maxlength="128" />
-          <label for="recoveryConfirmCode">Confirm new access code</label>
-          <input id="recoveryConfirmCode" name="confirm_code" type="password" autocomplete="new-password" required minlength="20" maxlength="128" />
+          <div class="secret-field"><input id="recoveryProof" name="recovery_code" type="password" autocomplete="one-time-code" required minlength="64" maxlength="64" /><button type="button" class="secret-toggle" data-secret-toggle="recoveryProof" aria-controls="recoveryProof" aria-label="Show recovery code" aria-pressed="false">Show</button></div>
+          <label for="recoveryNewCode">New password or passphrase</label>
+          <p class="gate-help" id="passphraseHelp">Use 20–128 characters. A memorable phrase or short sentence works; spaces count. Avoid spaces at the beginning or end. You can paste into both fields. Choose Show to check what you typed, then Hide for privacy.</p>
+          <div class="secret-field"><input id="recoveryNewCode" name="new_code" type="password" autocomplete="new-password" required minlength="20" maxlength="128" aria-describedby="passphraseHelp" spellcheck="false" autocapitalize="none" /><button type="button" class="secret-toggle" data-secret-toggle="recoveryNewCode" aria-controls="recoveryNewCode" aria-label="Show new passphrase" aria-pressed="false">Show</button></div>
+          <label for="recoveryConfirmCode">Confirm password or passphrase</label>
+          <div class="secret-field"><input id="recoveryConfirmCode" name="confirm_code" type="password" autocomplete="new-password" required minlength="20" maxlength="128" spellcheck="false" autocapitalize="none" /><button type="button" class="secret-toggle" data-secret-toggle="recoveryConfirmCode" aria-controls="recoveryConfirmCode" aria-label="Show confirmed passphrase" aria-pressed="false">Show</button></div>
           <button class="gate-btn" type="submit" id="recoveryCompleteBtn">Save my new access code</button>
         </form>
       </details>
@@ -611,7 +616,7 @@
 <div id="scrim" class="hidden"></div>
 
 </div>
-<script src="gate.js?v=20261004.1"></script>
+<script src="gate.js?v=20261006.1"></script>
 <script src="brand.js?v=20261004.1"></script>
 <script src="app.js?v=20261004.1"></script>
 <!-- PWA service worker (FLEET-0071, S230): network-first passthrough only,
